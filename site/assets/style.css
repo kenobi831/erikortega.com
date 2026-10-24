@@ -286,3 +286,19 @@ details.fold .linkbtn { margin-top: 6px; }
   .sitebar { gap: 13px; }
   .compare .row { grid-template-columns: 84px minmax(0,1fr) 54px; gap: 8px; }
 }
+
+/* about me */
+.about { display: grid; grid-template-columns: 1fr; gap: var(--s3); }
+.about .prose + .prose { margin-top: 10px; }
+.about .eyebrow, .offclock .eyebrow { margin-bottom: 10px; }
+.story .prose { line-height: 1.6; }
+.buildlist { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.buildlist li { display: grid; gap: 2px; padding-left: 12px; border-left: 2px solid var(--line-2); }
+.buildlist b { color: var(--ink); font-size: 14px; }
+.buildlist a { text-decoration: none; }
+.buildlist a b { color: var(--blue); }
+.buildlist span { color: var(--muted); font-size: 13px; line-height: 1.45; }
+.offclock { margin-top: var(--s3); }
+.chips.plain { margin-top: 0; padding-top: 0; border-top: 0; }
+.chips.plain .chip { white-space: normal; }
+@media (min-width: 860px) { .about { grid-template-columns: 1.1fr 1fr; } }
