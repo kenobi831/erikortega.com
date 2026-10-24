@@ -80,13 +80,14 @@ with s as (
          count(*) filter (where sell > buy)        as wins,
          count(*) filter (where sell < buy)        as losses,
          string_agg(distinct side, '/')            as sides,
-         round(avg((sell - buy) / nullif(buy, 0)) * 100, 1) as trade_return_pct
+         round(avg((sell - buy) / nullif(buy, 0)) * 100, 1) as trade_return_pct,
+         bool_and(followed_brief)                  as followed_brief
   from public.journal_trades group by date
 )
 select e.date,
        round((e.closing / nullif(e.open_eff, 0) - 1) * 100, 2) as return_pct,
        coalesce(t.trades, 0) as trades, coalesce(t.wins, 0) as wins, coalesce(t.losses, 0) as losses,
-       t.sides, t.trade_return_pct
+       t.sides, t.trade_return_pct, t.followed_brief
 from e left join t using (date)
 where e.closing is not null
 order by e.date;

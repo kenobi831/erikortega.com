@@ -1,1 +1,54 @@
-<!doctype html><title>Erik Ortega</title>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Erik Ortega</title>
+<meta name="description" content="Erik Ortega — builder from Salinas, CA. Daily SPY pre-market briefs, a trading journal, and a family diary.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <h1 style="font-size:34px;margin-top:40px">Erik Ortega</h1>
+  <p class="lede">Builder from Salinas, California. Construction and field work turned into software and businesses. This is where I keep my trading, my lessons, and my family's story.</p>
+
+  <h2>Today</h2>
+  <a href="/brief.html" class="card" id="today" style="display:block;text-decoration:none"><span class="muted">Loading the latest brief…</span></a>
+
+  <h2>Sections</h2>
+  <div class="grid cols-3">
+    <a class="card" href="/brief.html" style="text-decoration:none"><h3>Pre-Market Brief</h3><p class="muted" style="margin:0" id="briefRec">Daily SPY call before the open, graded after the close.</p></a>
+    <a class="card" href="/weekly.html" style="text-decoration:none"><h3>Weekly Review</h3><p class="muted" style="margin:0" id="weekLine">What worked, what didn't, what changes.</p></a>
+    <a class="card" href="/journal.html" style="text-decoration:none"><h3>Compound Journal</h3><p class="muted" style="margin:0" id="jLine">The 5% Daily Compound Challenge.</p></a>
+    <a class="card" href="/diary.html" style="text-decoration:none"><h3>Diary</h3><p class="muted" style="margin:0">Memoirs and family pictures. Coming soon.</p></a>
+  </div>
+  <footer>© Erik Ortega · Salinas, CA</footer>
+</main>
+<script>
+renderNav("Home");
+(async () => {
+  const idx = await getJSON("/data/briefs/index.json");
+  const days = idx.days.sort((a, b) => a.date.localeCompare(b.date));
+  const d = days[days.length - 1], R = record(days);
+  const status = d.correct === true ? `<span class="badge green">HIT ✓</span>` : d.correct === false ? `<span class="badge red">MISS ✗</span>` : `<span class="badge none">LIVE</span>`;
+  $("#today").innerHTML = `<div class="muted mono" style="font-size:12px">${esc(longDate(d.date))}</div>
+    <div class="hero-call" style="margin-top:6px"><div class="big ${d.call === "GREEN" ? "green" : d.call === "RED" ? "red" : ""}" style="font-size:30px">${d.call ? (d.call === "GREEN" ? "▲ " : "▼ ") + esc(d.call) : "NO CALL"} ${d.prob != null ? Math.round(d.prob * 100) + "%" : ""}</div>${status}</div>
+    <div class="muted mono" style="font-size:12px;margin-top:8px">${esc(d.verdict || "")} · ${esc(d.day_type || "")} · VIX ${num(d.vix)} · record ${R.w}–${R.l}</div>`;
+  $("#briefRec").textContent = `Record ${R.w}–${R.l} · Brier ${R.brier == null ? "—" : R.brier.toFixed(3)} · ${R.n} graded.`;
+})().catch(() => { $("#today").innerHTML = `<span class="muted">No brief yet.</span>`; });
+getJSON("/data/weeks/index.json").then((w) => { const x = w.weeks.sort((a, b) => b.start.localeCompare(a.start))[0]; if (x) $("#weekLine").textContent = `${shortDate(x.start)}: ${x.headline}`; }).catch(() => {});
+(async () => {
+  const sb = supabase.createClient(SITE.supabaseUrl, SITE.supabaseAnonKey);
+  const { data } = await sb.from("journal_public").select("return_pct,wins,losses").order("date");
+  if (!data || !data.length) return;
+  let g = 1; data.forEach((r) => (g *= 1 + (Number(r.return_pct) || 0) / 100));
+  const W = data.reduce((a, r) => a + r.wins, 0), L = data.reduce((a, r) => a + r.losses, 0);
+  $("#jLine").textContent = `${pct((g - 1) * 100, 1)} since start · trades ${W}–${L}.`;
+})().catch(() => {});
+</script>
+</body>
+</html>

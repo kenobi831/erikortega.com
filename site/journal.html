@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Compound Journal · Erik Ortega</title>
+<meta name="description" content="The 5% Daily Compound Challenge: daily account returns from SPY 0DTE trading.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <div class="row" style="align-items:center;justify-content:space-between">
+    <div style="flex:1 1 300px">
+      <h1>Compound Journal</h1>
+      <p class="lede">The 5% Daily Compound Challenge — SPY 0DTE options, one account, every day logged. Public numbers are percentages only.</p>
+    </div>
+    <div style="flex:0 0 auto" id="authBox"></div>
+  </div>
+
+  <!-- PUBLIC -->
+  <section id="pub">
+    <h2>Scoreboard</h2>
+    <div class="tiles" id="pubTiles"></div>
+    <h2>Growth since start</h2>
+    <div class="card"><div id="pubCurve"></div><div class="legend"><span><i style="background:var(--series)"></i>Account</span><span><i class="dash"></i>5%/day target</span></div></div>
+    <h2>Daily return</h2>
+    <div class="card"><div id="pubBars"></div></div>
+    <h2>Days</h2>
+    <div class="card scroll"><table class="tbl" id="pubTable"></table></div>
+  </section>
+
+  <!-- PRIVATE (owner only) -->
+  <section id="priv" class="hidden">
+    <h2>Account <span class="muted">· private</span></h2>
+    <div class="tiles" id="privTiles"></div>
+    <div class="card" style="margin-top:12px"><h3>Balance vs target</h3><div id="privCurve"></div><div class="legend"><span><i style="background:var(--series)"></i>Net worth at close</span><span><i class="dash"></i>5%/day target</span></div></div>
+    <div class="row" style="margin-top:16px">
+      <button class="btn primary" id="newEntry" style="flex:0 0 auto">+ New day</button>
+      <label class="btn" style="flex:0 0 auto;margin:0;color:var(--text)">Import screenshots<input type="file" id="bulkShots" accept="image/*" multiple class="hidden"></label>
+      <span class="muted" style="font-size:12px;flex:1 1 200px">Bulk import matches files named by date, e.g. <span class="mono">2026-10-23.png</span>.</span>
+    </div>
+    <div id="editor" class="card hidden" style="margin-top:12px"></div>
+    <h2>Days</h2>
+    <div class="card scroll"><table class="tbl" id="privTable"></table></div>
+  </section>
+
+  <footer>Not financial advice. Returns are the brokerage net worth at the close vs. the open, chained day to day.</footer>
+</main>
+<script>
+renderNav("Journal");
+const sb = supabase.createClient(SITE.supabaseUrl, SITE.supabaseAnonKey);
+let STATE = { settings: {}, entries: [], trades: [], shots: [], briefs: {} };
+
+// ── Public view ─────────────────────────────────────────────────────────
+async function loadPublic() {
+  const [{ data: rows, error }, { data: st }] = await Promise.all([
+    sb.from("journal_public").select("*").order("date"),
+    sb.from("journal_public_settings").select("*"),
+  ]);
+  if (error) { $("#pub").innerHTML = `<p class="notice">Journal data isn't available yet.</p>`; return; }
+  const rate = Number((st || []).find((s) => s.key === "daily_rate")?.value ?? 0.05);
+  let g = 1;
+  const curve = rows.map((r, i) => { g *= 1 + (Number(r.return_pct) || 0) / 100; return { ...r, cum: (g - 1) * 100, target: (Math.pow(1 + rate, i + 1) - 1) * 100 }; });
+  const W = rows.reduce((a, r) => a + r.wins, 0), L = rows.reduce((a, r) => a + r.losses, 0);
+  const last = curve[curve.length - 1];
+  const wk = weekReturn(rows);
+  $("#pubTiles").innerHTML = [
+    ["Since start", last ? pct(last.cum, 1) : "—", `${rows.length} days`],
+    ["Target path", last ? pct(last.target, 1) : "—", `${(rate * 100).toFixed(0)}% a day`],
+    ["Trades", `${W}–${L}`, W + L ? `${((W / (W + L)) * 100).toFixed(0)}% win rate` : ""],
+    ["This week", wk == null ? "—" : pct(wk, 1), "account"],
+  ].map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+  if (!rows.length) return;
+  lineChart($("#pubCurve"), {
+    title: "Growth since start", labels: curve.map((r) => shortDate(r.date)),
+    series: [{ name: "Account", values: curve.map((r) => r.cum), color: "var(--series)" }, { name: "Target", values: curve.map((r) => r.target), color: "var(--muted)", dash: true }],
+    baseline: 0, yFmt: (v) => v.toFixed(0) + "%",
+  });
+  barChart($("#pubBars"), {
+    title: "Daily return", labels: rows.map((r) => shortDate(r.date)), values: rows.map((r) => Number(r.return_pct) || 0),
+    tips: rows.map((r) => `${esc(shortDate(r.date))} <b>${pct(r.return_pct)}</b>${r.sides ? `<br><span class="muted">${esc(r.sides)} ${pct(r.trade_return_pct, 1)}</span>` : ""}`),
+    yFmt: (v) => v.toFixed(0) + "%",
+  });
+  $("#pubTable").innerHTML = `<thead><tr><th>Day</th><th>Side</th><th class="num">Trade</th><th class="num">Account</th><th class="num">Since start</th></tr></thead><tbody>${
+    curve.slice().reverse().map((r) => `<tr><td>${esc(dateParts(r.date).dow)} ${esc(shortDate(r.date))}</td><td>${esc(r.sides || "no trade")}</td><td class="num">${r.trades ? pct(r.trade_return_pct, 1) : "—"}</td><td class="num ${r.return_pct > 0 ? "ok" : r.return_pct < 0 ? "no" : ""}">${pct(r.return_pct)}</td><td class="num">${pct(r.cum, 1)}</td></tr>`).join("")
+  }</tbody>`;
+}
+function weekReturn(rows) {
+  if (!rows.length) return null;
+  const last = rows[rows.length - 1].date, p = dateParts(last);
+  const dt = new Date(Date.UTC(p.y, p.m - 1, p.d)); dt.setUTCDate(dt.getUTCDate() - ((dt.getUTCDay() + 6) % 7));
+  const mon = dt.toISOString().slice(0, 10);
+  let g = 1; rows.filter((r) => r.date >= mon).forEach((r) => (g *= 1 + (Number(r.return_pct) || 0) / 100));
+  return (g - 1) * 100;
+}
+
+// ── Auth ────────────────────────────────────────────────────────────────
+async function renderAuth() {
+  const { data: { session } } = await sb.auth.getSession();
+  const box = $("#authBox");
+  if (session && (session.user.email || "").toLowerCase() === SITE.ownerEmail) {
+    box.innerHTML = `<button class="btn" id="out">Sign out</button>`;
+    $("#out").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    if (!$("#priv").classList.contains("hidden")) return;
+    $("#priv").classList.remove("hidden");
+    await loadPrivate();
+  } else if (session) {
+    box.innerHTML = `<span class="muted" style="font-size:12px">Signed in as ${esc(session.user.email)} — not the owner.</span> <button class="btn" id="out">Sign out</button>`;
+    $("#out").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+  } else {
+    box.innerHTML = `<button class="btn" id="in">Owner login</button>`;
+    $("#in").onclick = async () => {
+      const email = prompt("Owner email");
+      if (!email) return;
+      if (email.trim().toLowerCase() !== SITE.ownerEmail) { alert("Only the owner can log in."); return; }
+      const { error } = await sb.auth.signInWithOtp({ email: email.trim(), options: { emailRedirectTo: location.origin + "/journal.html" } });
+      alert(error ? "Couldn't send the link: " + error.message : "Check your email for the login link.");
+    };
+  }
+}
+
+// ── Private view ────────────────────────────────────────────────────────
+async function loadPrivate() {
+  const [s, e, t, a] = await Promise.all([
+    sb.from("journal_settings").select("*"),
+    sb.from("journal_entries").select("*").order("date"),
+    sb.from("journal_trades").select("*").order("date").order("position"),
+    sb.from("journal_attachments").select("*").order("created_at"),
+  ]);
+  const err = s.error || e.error || t.error || a.error;
+  if (err) { $("#privTiles").innerHTML = `<p class="notice">Couldn't load: ${esc(err.message)}</p>`; return; }
+  STATE.settings = Object.fromEntries(s.data.map((r) => [r.key, r.value]));
+  STATE.entries = e.data; STATE.trades = t.data; STATE.shots = a.data;
+  try { const bi = await getJSON("/data/briefs/index.json"); STATE.briefs = Object.fromEntries(bi.days.map((d) => [d.date, d])); } catch {}
+  renderPrivate();
+}
+
+function computeDays() {
+  const start = Number(STATE.settings.start_balance || 0), rate = Number(STATE.settings.daily_rate || 0.05);
+  let prev = null;
+  return STATE.entries.map((en, i) => {
+    const open = en.opening != null ? Number(en.opening) : prev != null ? prev : start;
+    const close = en.closing != null ? Number(en.closing) : null;
+    const trades = STATE.trades.filter((t) => t.date === en.date);
+    const tradePL = trades.reduce((a, t) => a + (t.sell - t.buy) * t.multiplier * t.quantity - t.fees, 0);
+    const pl = close != null ? close - open : tradePL;
+    if (close != null) prev = close;
+    return { ...en, open, close, pl, ret: open ? (pl / open) * 100 : null, trades, tradePL, target: start * Math.pow(1 + rate, i + 1) };
+  });
+}
+
+function renderPrivate() {
+  const days = computeDays();
+  const start = Number(STATE.settings.start_balance || 0);
+  const last = days[days.length - 1];
+  const tr = STATE.trades.map((t) => (t.sell - t.buy) * t.multiplier * t.quantity - t.fees);
+  const wins = tr.filter((x) => x > 0), losses = tr.filter((x) => x < 0);
+  const avgW = wins.length ? wins.reduce((a, b) => a + b, 0) / wins.length : 0;
+  const avgL = losses.length ? losses.reduce((a, b) => a + b, 0) / losses.length : 0;
+  const wr = tr.length ? wins.length / tr.length : 0;
+  const bal = last ? last.close ?? last.open : start;
+  $("#privTiles").innerHTML = [
+    ["Net worth", usd(bal), last ? shortDate(last.date) : ""],
+    ["Since start", start ? pct(((bal - start) / start) * 100, 1) : "—", `from ${usd(start)}`],
+    ["vs target", last ? usd(bal - last.target) : "—", last ? `target ${usd(last.target)}` : ""],
+    ["Avg win / loss", `${usd(avgW)} / ${usd(avgL)}`, `${(wr * 100).toFixed(0)}% win rate`],
+    ["Expectancy", usd(wr * avgW + (1 - wr) * avgL), "per trade, after fees entered"],
+  ].map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v" style="font-size:18px">${v}</div><div class="s">${s}</div></div>`).join("");
+  if (days.length) lineChart($("#privCurve"), {
+    title: "Balance vs target", labels: days.map((d) => shortDate(d.date)),
+    series: [{ name: "Net worth", values: days.map((d) => d.close ?? d.open), color: "var(--series)" }, { name: "Target", values: days.map((d) => d.target), color: "var(--muted)", dash: true }],
+    yFmt: (v) => "$" + v.toFixed(0),
+  });
+  $("#privTable").innerHTML = `<thead><tr><th>Day</th><th class="num">Open</th><th class="num">Close</th><th class="num">P/L</th><th class="num">Return</th><th>Trades</th><th>📷</th></tr></thead><tbody>${
+    days.slice().reverse().map((d) => `<tr class="click" data-date="${d.date}"><td>${esc(dateParts(d.date).dow)} ${esc(shortDate(d.date))}</td><td class="num">${usd(d.open)}</td><td class="num">${usd(d.close)}</td><td class="num ${d.pl > 0 ? "ok" : d.pl < 0 ? "no" : ""}">${usd(d.pl)}</td><td class="num">${pct(d.ret)}</td><td>${d.trades.map((t) => esc(t.symbol)).join(", ") || '<span class="muted">none</span>'}</td><td>${STATE.shots.filter((s) => s.date === d.date).length || ""}</td></tr>`).join("")
+  }</tbody>`;
+  document.querySelectorAll("#privTable tr.click").forEach((tr) => (tr.onclick = () => openEditor(tr.dataset.date)));
+}
+
+// ── Editor ──────────────────────────────────────────────────────────────
+const TRADE_FIELDS = [
+  ["symbol", "Symbol", "text"], ["side", "Side", "sel:Call,Put,Long,Short"], ["buy", "Buy", "num"], ["sell", "Sell", "num"],
+  ["quantity", "Qty", "num"], ["multiplier", "Mult", "num"], ["fees", "Fees $", "num"], ["planned_stop", "Planned stop", "num"],
+  ["entry_time", "Entry (PT)", "text"], ["exit_time", "Exit (PT)", "text"], ["brief_call", "Brief said", "sel:,GREEN,RED,NO EDGE"], ["followed_brief", "Followed brief?", "sel:,yes,no"],
+  ["setup", "Setup / why", "wide"],
+];
+function tradeBox(t, i) {
+  return `<div class="trade-box" data-i="${i}"><div class="form-grid">${TRADE_FIELDS.map(([k, lbl, type]) => {
+    let v = t[k]; if (k === "followed_brief") v = v === true ? "yes" : v === false ? "no" : "";
+    if (type.startsWith("sel:")) return `<div><label>${lbl}</label><select data-k="${k}">${type.slice(4).split(",").map((o) => `<option${String(v ?? "") === o ? " selected" : ""}>${o}</option>`).join("")}</select></div>`;
+    if (type === "wide") return `<div style="grid-column:1/-1"><label>${lbl}</label><input data-k="${k}" value="${esc(v ?? "")}"></div>`;
+    return `<div><label>${lbl}</label><input data-k="${k}" ${type === "num" ? 'inputmode="decimal"' : ""} value="${esc(v ?? "")}"></div>`;
+  }).join("")}</div><button class="btn danger" data-rm="${i}" style="margin-top:8px">Remove trade</button></div>`;
+}
+async function openEditor(date) {
+  const isNew = !date;
+  const en = isNew ? { date: new Date().toLocaleDateString("en-CA", { timeZone: "America/New_York" }), closing: "", opening: "", notes: "" } : STATE.entries.find((e) => e.date === date);
+  let trades = isNew ? [] : STATE.trades.filter((t) => t.date === date).map((t) => ({ ...t }));
+  const shots = isNew ? [] : STATE.shots.filter((s) => s.date === date);
+  const ed = $("#editor"); ed.classList.remove("hidden");
+  const draw = () => {
+    ed.innerHTML = `<h3>${isNew ? "New day" : esc(longDate(en.date))}</h3>
+      <div class="form-grid">
+        <div><label>Date</label><input id="f_date" type="date" value="${esc(en.date)}"></div>
+        <div><label>Closing net worth $</label><input id="f_close" inputmode="decimal" value="${esc(en.closing ?? "")}"></div>
+        <div><label>Opening override $ <span class="muted">(deposits only)</span></label><input id="f_open" inputmode="decimal" value="${esc(en.opening ?? "")}"></div>
+      </div>
+      <div style="margin-top:10px"><label>Notes</label><textarea id="f_notes">${esc(en.notes || "")}</textarea></div>
+      <h2 style="margin-top:16px">Trades</h2><div id="tradeList">${trades.map(tradeBox).join("")}</div>
+      <button class="btn" id="addTrade">+ Trade</button>
+      <h2 style="margin-top:16px">Screenshots</h2><div class="shots" id="shotList"></div>
+      <label class="btn" style="display:inline-block;margin-top:8px;color:var(--text)">Add screenshot<input type="file" id="f_shot" accept="image/*" multiple class="hidden"></label>
+      <div class="row" style="margin-top:16px;justify-content:space-between">
+        <div style="flex:0 0 auto"><button class="btn primary" id="save">Save</button> <button class="btn" id="cancel">Close</button></div>
+        ${isNew ? "" : `<button class="btn danger" id="del" style="flex:0 0 auto">Delete day</button>`}
+      </div><p class="muted" id="msg" style="font-size:13px"></p>`;
+    ed.querySelectorAll("[data-rm]").forEach((b) => (b.onclick = () => { readTrades(); trades.splice(+b.dataset.rm, 1); draw(); }));
+    $("#addTrade").onclick = () => {
+      readTrades();
+      const d = $("#f_date").value, b = STATE.briefs[d];
+      trades.push({ symbol: "SPY ", side: "Call", buy: "", sell: "", quantity: 1, multiplier: 100, fees: 1.71, brief_call: b?.call || "" });
+      draw();
+    };
+    $("#cancel").onclick = () => { ed.classList.add("hidden"); };
+    $("#save").onclick = save;
+    if (!isNew) $("#del").onclick = del;
+    $("#f_shot").onchange = async (ev) => {
+      if (isNew) { alert("Save the day first, then add screenshots."); return; }
+      for (const f of ev.target.files) { const r = await uploadShot(en.date, f); if (r && r.error) alert(r.error.message); }
+      await loadPrivate(); openEditor(en.date);
+    };
+    showShots(shots);
+  };
+  const readTrades = () => {
+    en.date = $("#f_date").value; en.closing = $("#f_close").value; en.opening = $("#f_open").value; en.notes = $("#f_notes").value;
+    trades = [...ed.querySelectorAll(".trade-box")].map((box) => {
+      const t = {}; box.querySelectorAll("[data-k]").forEach((inp) => (t[inp.dataset.k] = inp.value)); return t;
+    });
+  };
+  const save = async () => {
+    readTrades();
+    const msg = $("#msg"); msg.textContent = "Saving…";
+    const n = (v) => (v === "" || v == null ? null : Number(v));
+    if (!en.date) { msg.textContent = "Date is required."; return; }
+    const row = { date: en.date, closing: n(en.closing), opening: n(en.opening), notes: en.notes || "", updated_at: new Date().toISOString() };
+    if (!isNew && date !== en.date) { const r = await sb.from("journal_entries").update(row).eq("date", date); if (r.error) { msg.textContent = r.error.message; return; } }
+    else { const r = await sb.from("journal_entries").upsert(row); if (r.error) { msg.textContent = r.error.message; return; } }
+    const d1 = await sb.from("journal_trades").delete().eq("date", en.date);
+    if (d1.error) { msg.textContent = d1.error.message; return; }
+    if (trades.length) {
+      const rows = trades.map((t, i) => ({
+        date: en.date, position: i, symbol: t.symbol || "", side: t.side || "", asset_type: "option",
+        buy: n(t.buy) ?? 0, sell: n(t.sell) ?? 0, quantity: n(t.quantity) ?? 1, multiplier: n(t.multiplier) ?? 100, fees: n(t.fees) ?? 0,
+        planned_stop: n(t.planned_stop), entry_time: t.entry_time || null, exit_time: t.exit_time || null, setup: t.setup || null,
+        brief_call: t.brief_call || null, followed_brief: t.followed_brief === "yes" ? true : t.followed_brief === "no" ? false : null,
+      }));
+      const r = await sb.from("journal_trades").insert(rows); if (r.error) { msg.textContent = r.error.message; return; }
+    }
+    msg.textContent = "Saved.";
+    await Promise.all([loadPrivate(), loadPublic()]);
+    openEditor(en.date);
+  };
+  const del = async () => {
+    if (!confirm(`Delete ${en.date} and its trades? Screenshots stay in storage.`)) return;
+    const r = await sb.from("journal_entries").delete().eq("date", date);
+    if (r.error) { $("#msg").textContent = r.error.message; return; }
+    ed.classList.add("hidden"); await Promise.all([loadPrivate(), loadPublic()]);
+  };
+  draw();
+  ed.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+async function showShots(shots) {
+  const box = $("#shotList"); if (!box) return;
+  if (!shots.length) { box.innerHTML = `<span class="muted" style="font-size:13px">none</span>`; return; }
+  const { data } = await sb.storage.from("journal").createSignedUrls(shots.map((s) => s.path), 3600);
+  box.innerHTML = (data || []).map((u) => `<a href="${esc(u.signedUrl)}" target="_blank" rel="noopener"><img src="${esc(u.signedUrl)}" alt="screenshot"></a>`).join("");
+}
+async function uploadShot(date, file) {
+  if (!STATE.entries.find((e) => e.date === date)) return { error: { message: `no entry for ${date}` } };
+  const ext = (file.name.split(".").pop() || "png").toLowerCase();
+  const path = `${date}/${crypto.randomUUID()}.${ext}`;
+  const up = await sb.storage.from("journal").upload(path, file, { contentType: file.type || "image/png" });
+  if (up.error) return up;
+  return sb.from("journal_attachments").insert({ date, path });
+}
+$("#newEntry").onclick = () => openEditor(null);
+$("#bulkShots").onchange = async (ev) => {
+  const files = [...ev.target.files]; let ok = 0, skipped = [];
+  for (const f of files) {
+    const m = f.name.match(/(\d{4}-\d{2}-\d{2})/);
+    if (!m) { skipped.push(f.name); continue; }
+    const r = await uploadShot(m[1], f);
+    if (r && r.error) skipped.push(`${f.name} (${r.error.message})`); else ok++;
+  }
+  alert(`Uploaded ${ok}.` + (skipped.length ? `\nSkipped:\n${skipped.join("\n")}` : ""));
+  await loadPrivate();
+};
+
+loadPublic();
+renderAuth();
+sb.auth.onAuthStateChange((ev) => { if (ev === "SIGNED_IN") renderAuth(); });
+</script>
+</body>
+</html>

@@ -1,0 +1,38 @@
+{
+ "actual_gap": 2.25,
+ "brier": 0.2601,
+ "call": "GREEN",
+ "close": 762.63,
+ "correct": false,
+ "date": "2026-09-30",
+ "day_type": "QUIET",
+ "drivers": "Soft Aug PCE (core 3.0% vs 3.3%) easing yields/dollar and Oct hike odds vs oil firm on Iran tensions; Micron AMC and quarter-end flows add chop.",
+ "gap_call": 2.3,
+ "graded_at": "2026-09-30T20:50:00Z",
+ "high": 769.41,
+ "intraday_note": "Direction right for most of the session: SPY was green from the 9:30 open (766.45) through the afternoon, peaking at 769.41; S&P +0.47% mid-morning, +0.58% at 11:37 ET. The market gave it back late in the day, and the close-vs-open grade is still RED (MISS). Why it turned (per AP/BNN wrap): 10Y yield went from a 5.20% morning low to 5.29% (above the 5.26% level in the morning's wrong_if, so that trigger fired) after stronger revised GDP data and the Chicago PMI beat (58.8 vs 51.0), which kept Oct hike odds alive; oil rose again on uncertainty about when the Iran war will allow crude flows to fully resume; financials/Dow led the drop (Dow -443 pts, -0.9%) while Nasdaq held +0.2%. Final-minutes selling: TheStreet had the S&P at -0.04% at 3:59 PM vs -0.25% at the close, consistent with quarter-end rebalancing/MOC selling. That timing is inferred; no source states it directly. Lesson: the morning's wrong_if yield trigger worked. When 10Y breaks the wrong_if level intraday, the GREEN thesis is void.",
+ "intraday_sources": [
+  "https://fool.com/coverage/stock-market-today/2026/09/30/stock-market-midday-sept-30-markets-rise-on-softer-inflation-data-investors-await-micron-earnings",
+  "https://bnnbloomberg.ca/markets/2026/09/30/wall-street-closes-in-on-a-winning-september-following-an-encouraging-update-on-inflation",
+  "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-sept-30-2026"
+ ],
+ "logged_at": "2026-09-30T12:48:45Z",
+ "low": 762.18,
+ "math": "a) start 50. b) Wed: no calendar tilt; VIX 16.2 not <15: 0. c) D1 Aug PCE soft (core 3.0% y/y vs 3.3% cons, 0.2% m/m vs 0.3%) + ADP beat 90k vs 70k \u2014 released 8:30/8:15, priced into gap: class 1, 0. D2 Treasury yields easing from 2007 highs (10Y ~5.22%, -3bp; DXY -0.3% to 101.05 post-PCE), Oct hike odds falling to ~45-50% after Williams \u2014 still developing: class 2, +3 GREEN. D3 Oil/Iran: WTI ~$90.2-90.7 +0.9-1.5%, Brent >$103, Trump denies Iran sanctions relief \u2014 developing: class 2, -2 RED. D4 Chicago PMI 9:45, EIA 10:30, Kashkari (CFR, time n/a), Goolsbee 4:00 PM, Micron after close, quarter-end flows: class 3, 0 (chop risk). d) no active lessons. e) no major release/FOMC after 9:30 (Chicago PMI minor) -> 0.55 cap n/a; QUIET cap 0.60 (not binding). f) 0 graded -> cap 0.65 (not binding). g) 50+3-2 = 51 -> GREEN. Context: 3 of 7 instruments risk-off (WTI, Gold, VIX up) \u2014 not used.",
+ "open": 766.45,
+ "prev_close": 764.2,
+ "prob": 0.51,
+ "result": "RED",
+ "review": "MISS. Called GREEN 51%; SPY open 766.45 -> close 762.63 (-0.50%), RED. Claims: GAP right (called +2.3, actual +2.25 from 764.20). DAY TYPE QUIET wrong-borderline: range 7.23 = 0.94% of open (>0.9%), open->close -0.50% (not trend-prone either). D1 soft PCE priced into gap: RIGHT (gap up held only early). D2 yields easing -> GREEN: WRONG \u2014 10Y back to ~5.25% by mid-morning, 30Y new 52-wk high 5.632%; financials/Dow (-0.86%) led losses. D3 oil/Iran -> RED: RIGHT \u2014 WTI rebounded to ~$90.9, Brent >$98; wraps cite oil rebound limiting PCE gains. D4 chop/quarter-end: partly right \u2014 Chicago PMI (9:45) 58.8 vs 51.0 est, a big beat that argued for hike risk. Prob 51% coin-flip: sizing fine. Session: 8:30 soft PCE (core 0.2% m/m) gap up; ~9:45-11:00 peak (SPY high 769.41, S&P +0.47%) on tech strength after hot Chicago PMI; midday-afternoon steady fade as yields/oil firmed, SPY closed 762.63 near 762.18 low. Nasdaq +0.24% vs Dow -0.86% \u2014 rotation into megacap tech, out of financials/cyclicals. Missed: strong real spending (+0.6% m/m) and Chicago PMI blowout keeping yields pinned near highs despite soft PCE; quarter-end rebalancing/selling into close. Candidate pattern: gap-up on already-priced soft data while 10Y sits within ~5bp of multi-decade high tends to fade (open near high, lean RED).",
+ "sources": [
+  "https://stockanalysis.com/etf/spy/history/ (OHLC used)",
+  "https://www.investing.com/etfs/spdr-s-p-500 (prev close 764.20, open 766.37, high 769.41 \u2014 within $0.10)",
+  "https://tradingeconomics.com/united-states/stock-market (S&P -0.25%)",
+  "https://www.tradingkey.com/analysis/stocks/us-stocks/262194875-us-stock-close-nasdaq-rise-august-pce-treasury-yields-intel-micron-tradingkey",
+  "https://investrade.com/mid-morning-look-september-30-2026/",
+  "https://www.thestreet.com/stock-market-today/stock-market-today-dow-jones-sp-500-nasdaq-updates-sept-30-2026"
+ ],
+ "verdict": "RISK-ON",
+ "vix": 16.2,
+ "wrong_if": "First 30-min candle red and 10:00 price below VWAP; 10Y yield reverses back above 5.26% or WTI pushes >$92; SPY loses the 9:30 open after Chicago PMI (9:45)."
+}

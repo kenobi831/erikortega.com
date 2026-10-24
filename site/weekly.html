@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Weekly Review · Erik Ortega</title>
+<meta name="description" content="Weekly review of the SPY pre-market brief and the trading journal: what worked, what didn't, what changes.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/style.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/assets/app.js"></script>
+</head>
+<body>
+<main class="wrap">
+  <h1>Weekly Review</h1>
+  <p class="lede">Every Friday after the close: how the brief did, how the trades did, and what changes next week.</p>
+  <section id="week"></section>
+  <h2>All weeks</h2>
+  <div class="card scroll"><table class="tbl" id="weeks"></table></div>
+  <footer>Journal figures are percentages only. <a href="/brief.html">Daily briefs →</a></footer>
+</main>
+<script>
+renderNav("Weekly");
+(async () => {
+  const idx = await getJSON("/data/weeks/index.json");
+  const weeks = idx.weeks.sort((a, b) => b.start.localeCompare(a.start));
+  if (!weeks.length) { $("#week").innerHTML = `<p class="notice">The first weekly review posts on Friday.</p>`; return; }
+  const want = new URLSearchParams(location.search).get("w");
+  const sel = weeks.find((w) => w.id === want) || weeks[0];
+  const w = await getJSON(`/data/weeks/${sel.id}.json`);
+  const br = w.brief_record || {};
+  let j = w.journal || {};
+  // Journal percentages come live from Supabase when the weekly file doesn't carry them.
+  if (!j.daily && window.supabase) {
+    try {
+      const sb = supabase.createClient(SITE.supabaseUrl, SITE.supabaseAnonKey);
+      const { data: all } = await sb.from("journal_public").select("*").order("date");
+      if (all && all.length) {
+        let g = 1, gw = 1;
+        const rate = 0.05;
+        all.forEach((r) => (g *= 1 + (Number(r.return_pct) || 0) / 100));
+        const wk = all.filter((r) => r.date >= w.start && r.date <= w.end);
+        const upto = all.filter((r) => r.date <= w.end);
+        let gu = 1; upto.forEach((r) => (gu *= 1 + (Number(r.return_pct) || 0) / 100));
+        wk.forEach((r) => (gw *= 1 + (Number(r.return_pct) || 0) / 100));
+        j = {
+          trades: { w: wk.reduce((a, r) => a + r.wins, 0), l: wk.reduce((a, r) => a + r.losses, 0) },
+          week_return_pct: (gw - 1) * 100, since_start_pct: (gu - 1) * 100,
+          target_since_start_pct: (Math.pow(1 + rate, upto.length) - 1) * 100,
+          daily: wk.map((r) => ({ date: r.date, return_pct: Number(r.return_pct), side: r.sides, trade_return_pct: r.trade_return_pct, followed_brief: r.followed_brief })),
+        };
+      }
+    } catch {}
+  }
+  const list = (arr) => (arr && arr.length ? `<ul class="clean">${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="muted">nothing</p>`);
+
+  let h = `<h2>${esc(shortDate(w.start))} – ${esc(shortDate(w.end))}, ${dateParts(w.end).y}</h2>
+  <div class="card"><p style="font-size:17px;margin:0">${esc(w.headline || "")}</p></div>
+  <div class="tiles" style="margin-top:12px">
+    <div class="tile"><div class="k">Brief this week</div><div class="v">${br.week ? `${br.week.w}–${br.week.l}` : "—"}</div><div class="s">close vs open</div></div>
+    <div class="tile"><div class="k">Brief first hour</div><div class="v">${br.first_hour ? `${br.first_hour.w}–${br.first_hour.l}` : "—"}</div><div class="s">9:30–10:30 ET</div></div>
+    <div class="tile"><div class="k">Brief all-time</div><div class="v">${br.all_time ? `${br.all_time.w}–${br.all_time.l}` : "—"}</div><div class="s">${br.all_time ? `hit ${num(br.all_time.hit_pct, 0)}% · Brier ${num(br.all_time.brier, 3)}` : ""}</div></div>
+    <div class="tile"><div class="k">Trades</div><div class="v">${j.trades ? `${j.trades.w}–${j.trades.l}` : "—"}</div><div class="s">${j.week_return_pct != null ? "account " + pct(j.week_return_pct, 1) : ""}</div></div>
+  </div>`;
+  if (j.daily && j.daily.length) {
+    h += `<div class="card" style="margin-top:12px"><h3>Account return by day</h3><div id="wkChart"></div>
+      <div class="scroll"><table class="tbl" style="margin-top:8px"><thead><tr><th>Day</th><th>Side</th><th class="num">Trade</th><th class="num">Account</th><th>With brief?</th></tr></thead><tbody>${
+      j.daily.map((d) => `<tr><td>${esc(dateParts(d.date).dow)} ${esc(shortDate(d.date))}</td><td>${esc(d.side || "—")}</td><td class="num">${pct(d.trade_return_pct, 1)}</td><td class="num">${pct(d.return_pct)}</td><td>${d.followed_brief == null ? "—" : d.followed_brief ? "yes" : "no"}</td></tr>`).join("")
+    }</tbody></table></div>${j.since_start_pct != null ? `<p class="muted mono" style="font-size:12px;margin:8px 0 0">Since start ${pct(j.since_start_pct, 1)} · 5%/day target ${pct(j.target_since_start_pct, 1)}</p>` : ""}</div>`;
+  }
+  h += `<h2>What we learned</h2><div class="card">${list(w.learned)}</div>
+    <h2>Changes to the brief</h2><div class="card">${list(w.improve)}${w.rule_changes && w.rule_changes.length ? `<p class="muted" style="margin:10px 0 4px;font-size:13px">Rule changes</p>${list(w.rule_changes)}` : ""}</div>
+    <h2>Trading notes</h2><div class="card">${list(w.trading_notes)}</div>`;
+  $("#week").innerHTML = h;
+  if (j.daily && j.daily.length) {
+    barChart($("#wkChart"), {
+      title: "Account return by day",
+      labels: j.daily.map((d) => dateParts(d.date).dow),
+      values: j.daily.map((d) => d.return_pct),
+      tips: j.daily.map((d) => `${esc(shortDate(d.date))} <b>${pct(d.return_pct)}</b><br><span class="muted">${esc(d.side || "")} ${pct(d.trade_return_pct, 1)}</span>`),
+      yFmt: (v) => v.toFixed(0) + "%",
+    });
+  }
+  $("#weeks").innerHTML = `<thead><tr><th>Week</th><th>Brief</th><th>Trades</th><th class="num">Account</th><th>Headline</th></tr></thead><tbody>${
+    weeks.map((x) => `<tr class="click" onclick="location.search='?w=${esc(x.id)}'"><td class="mono">${esc(shortDate(x.start))}</td><td class="mono">${esc(x.brief || "—")}</td><td class="mono">${esc(x.trades || "—")}</td><td class="num">${pct(x.week_return_pct, 1)}</td><td>${esc(x.headline || "")}</td></tr>`).join("")
+  }</tbody>`;
+})().catch((e) => { $("#week").innerHTML = `<p class="notice">Couldn't load the weekly review (${esc(e.message)}).</p>`; });
+</script>
+</body>
+</html>

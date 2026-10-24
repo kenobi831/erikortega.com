@@ -1,0 +1,42 @@
+{
+ "actual_gap": 3.98,
+ "brier": 0.2601,
+ "call": "GREEN",
+ "close": 766.48,
+ "correct": false,
+ "date": "2026-10-19",
+ "day_type": "NORMAL",
+ "drivers": "AI/semis dip-buy (NQ +1.1-1.3% vs Dow -0.2%) after the worst Nasdaq week since June; oil lower on Russia sanctions waiver; Europe weak on France; R1 fade of a ~+0.5% gap offsets the Monday tilt.",
+ "first_hour_confidence": "medium",
+ "first_hour_correct": false,
+ "first_hour_move": -0.77,
+ "first_hour_note": "No intraday bars reachable (Yahoo chart API robots-blocked). 10:30 proxy = Investrade 'Mid-Morning Look' published 10:23 ET, S&P 500 +0.42% -> 763.25 x 1.0042 = 766.46 (Sunday Guardian ~10:16 ET +0.38% -> ~766.15 agrees). Open had S&P +0.57% (TheStreet 9:33); semis 'higher but pulled back from best levels' in the first hour while the Dow and Russell slid. No 10:00 US data moved it (NAHB fell to 29, 14-yr low, weighed on homebuilders/REITs). First hour RED and close RED agreed: gap faded slightly both windows, with a mid-day rally to the 770.46 high in between.",
+ "first_hour_open": 767.23,
+ "first_hour_price": 766.46,
+ "first_hour_result": "RED",
+ "first_hour_sources": [
+  "https://investrade.com/mid-morning-look-october-19-2026/",
+  "https://sundayguardianlive.com/business/us-stock-market-today-live-dow-jones-slips-013-sp-500-rises-038-nasdaq-edges-higher-as-oil-surge-treasury-yields-fall-tech-sell-off-fed-risk-persist-check-what-investors-should-know-308612/",
+  "https://www.thestreet.com/stock-market-today/stock-market-today-oct-19-2026-nasdaq-futures-climb-as-tech-rebound-from-sell-off"
+ ],
+ "gap_call": 3.7,
+ "graded_at": "2026-10-19T20:43:00Z",
+ "high": 770.46,
+ "logged_at": "2026-10-19T12:49:47Z",
+ "low": 765.82,
+ "math": "a) start 50. b) Mon +3 GREEN -> 53; VIX 18.59 (Yahoo ~8:48 ET, -1.40/-7.0% vs 19.99; Cestrian 18.59 at 4:04 ET) not <15: 0. c) D1 AI/tech dip-buy rebound after Fri Nasdaq -2.14% / SOX longest losing streak since 2008 - NQ +1.10% (Benzinga 8:23) to +1.28% (Yahoo ~8:48) vs ES +0.39/+0.47% and Dow -0.2/-0.3%; NBIS +7% (Truist), CRWV +1.3-6%, MU +3.3%, AVGO +2.3-2.9%, NVDA +1.1-1.7%, INTC +4% (JPM upgrade). Mostly in the gap, but AI-credit stress still live (CRWV credit spread ~1,200bp, GS: AI credit spreads widest of year, heavy put buying into META/TSLA Wed) - class 2, +1 GREEN (W7 context: NQ rebound >=0.7% after prior-day tech selloff held on 10-09; single instance so held to +1). D2 Oil - Trump waiver of some Russia sanctions/duties (Russian diesel), Brent -1.3/-1.8% (~$104-108.5), WTI Dec 97.97 -1.06%; Iran reports another tanker mined in Hormuz - 0 per W6. D3 Europe/France - STOXX 600 -0.7%, CAC -1%+ on French budget-deficit protests, French 10Y ~4.86%, EUR -0.3% to 1.1203; US 10Y ~5.07-5.10% flat to -2bp - Europe-led, no US trigger: class 1, 0 (W4 context). D4 NAHB 10:00, no 8:30 US data, Fed quiet period (Oct 17-29), STLD after close, META/TSLA Wed - class 3, 0 (pre-earnings chop risk). d) Active R1: SPY indicated ~+0.5% (SPY pre-mkt 767.14 at 8:23 vs 763.25 close; ES +0.47%) >= 0.4% -> one step toward the fade, -3 RED; cap 55% (not binding). Watching: W7 -> D1 +1 not 0; W6 -> oil 0; W4 -> yields 0; W8/W9 n/a (sector rebounding, NQ up); W12 n/a (Monday); W10/W11 n/a (no inflation print). e) no major release/FOMC after 9:30 -> 0.55 cap n/a; NORMAL day -> QUIET cap n/a. f) 13 graded (<20) -> cap 0.65 not binding; mean Brier 0.256. g) 53 +1 -3 = 51 -> GREEN 51%. Context: 2 of 7 risk-off (DXY 101.93 +0.09%, gold 4,183 +0.05%; ES/NQ up, 10Y flat-down, WTI down, VIX down) - not used; gap continuation 48.7% - neutral (R1 handles the fade).",
+ "open": 767.23,
+ "prev_close": 763.25,
+ "prob": 0.51,
+ "result": "RED",
+ "review": "CALL GREEN 51% -> RED (767.23 -> 766.48, -0.10%), MISS but a coin-flip-sized miss. FIRST HOUR: RED (767.23 -> ~766.46 at ~10:23, conf medium) -> wrong; first hour and close agreed (gap faded in both windows, mid-day rally to 770.46 ~11:30-1pm in between). CLAIMS: Gap +3.7 vs actual +3.98 -> right. Day type NORMAL vs range 4.64 = 0.60% of open, |o->c| 0.10% -> acceptable (actually QUIET-like). D1 AI/tech dip-buy +1 GREEN -> no open->close effect for SPY: Nasdaq +1.09% at 9:33 and ~+1.1% at close (held the gap, did not extend; NDX peaked +1.7-1.9% midday); breadth narrow (Russell -1.66% at the open, Dow -0.07%). D2 oil 0 -> right-ish: oil eased early but WTI +2.4% to ~$103.7 by 3:42 on Houthi attacks on Saudi targets, coinciding with the late fade. D3 Europe/10Y 0 -> wrong premise: 10Y did not stay flat-down; it rose ~6bp to 5.13-5.14% by midday, utilities -1.6%, real estate -1.2%, NAHB 14-yr low. R1 fade (-3) -> right (close below open). Prob 51% -> fine. WHAT MOVED IT: 9:30 tech/AI gap (INTC JPM upgrade, CRWV GS upgrade, SNDK/MU/LRCX), Dow/small caps lag; ~11:30-1pm peak S&P +0.85% on AMZN +5% (MS top pick) and chips; afternoon fade from ~+0.85% to +0.41% as 10Y held 5.14%, rate-sensitives sold, and oil spiked ~3:40 on Houthi-Saudi attacks. MISSED: intraday 10Y rise to 5.14% (BofA flagging an Oct hike risk pre-market) and narrow breadth (Russell weak). CANDIDATE: When R1 fires on a tech-only gap up (NQ >=1% while Dow/Russell are flat-down pre-market), the first hour fades too, not just the close.",
+ "sources": [
+  "https://stockanalysis.com/etf/spy/history/ (OHLC; quote page 'At close Oct 19 4:00 PM')",
+  "https://www.thestreet.com/stock-market-today/stock-market-today-oct-19-2026-nasdaq-futures-climb-as-tech-rebound-from-sell-off (close S&P +0.41% -> ~766.38, within $0.10)",
+  "https://www.benzinga.com/markets/equities/26/10/62446593/stock-market-today-sandisk-jumps-nasdaq-100-rises-ai-chip-rout-reverses",
+  "https://www.fool.com/coverage/stock-market-today/2026/10/19/stock-market-midday-oct-19-tech-stocks-rebound-as-ai-confidence-returns/"
+ ],
+ "verdict": "RISK-ON",
+ "vix": 18.59,
+ "wrong_if": "SPY loses the 9:30-10:00 low and NQ gives back half its gap as CRWV/MU/SOX turn red (AI-credit headlines resume); or 10Y pushes back above ~5.12% / oil spikes on a fresh Hormuz incident."
+}

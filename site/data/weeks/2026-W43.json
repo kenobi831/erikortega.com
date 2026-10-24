@@ -1,0 +1,95 @@
+{
+ "id": "2026-W43",
+ "start": "2026-10-19",
+ "end": "2026-10-23",
+ "published": "2026-10-23",
+ "headline": "Brief 2\u20133 on the close, 1\u20134 on the first hour. The trades went 5\u20130 anyway \u2014 the edge is the open tape, not the brief's direction call.",
+ "brief_record": {
+  "week": {
+   "w": 2,
+   "l": 3
+  },
+  "first_hour": {
+   "w": 1,
+   "l": 4
+  },
+  "all_time": {
+   "w": 7,
+   "l": 11,
+   "hit_pct": 38.9,
+   "brier": 0.2561,
+   "graded": 18
+  }
+ },
+ "journal": {
+  "trades": {
+   "w": 5,
+   "l": 0
+  },
+  "week_return_pct": 42.3,
+  "since_start_pct": 50.2,
+  "target_since_start_pct": 118.3,
+  "daily": [
+   {
+    "date": "2026-10-19",
+    "return_pct": 4.59,
+    "side": "Put",
+    "trade_return_pct": 23.8,
+    "followed_brief": false
+   },
+   {
+    "date": "2026-10-20",
+    "return_pct": 8.76,
+    "side": "Put",
+    "trade_return_pct": 26.9,
+    "followed_brief": true
+   },
+   {
+    "date": "2026-10-21",
+    "return_pct": 8.67,
+    "side": "Put",
+    "trade_return_pct": 32.6,
+    "followed_brief": false
+   },
+   {
+    "date": "2026-10-22",
+    "return_pct": 9.67,
+    "side": "Call",
+    "trade_return_pct": 35.6,
+    "followed_brief": true
+   },
+   {
+    "date": "2026-10-23",
+    "return_pct": 4.96,
+    "side": "Call",
+    "trade_return_pct": 17.8,
+    "followed_brief": true
+   }
+  ]
+ },
+ "learned": [
+  "Gap direction was right 5 of 5 \u2014 the most reliable thing on the card.",
+  "The close call has no edge yet: 7\u201311 all-time, mean Brier 0.256 (worse than always saying 50%). Every call this week sat at 51\u201353%.",
+  "Gap size went stale twice (10-20, 10-23): the brief runs ~7:52 ET and futures kept moving. On 10-23 a 9:25 recheck would have fired R1, which was right.",
+  "Day type said NORMAL all week from VIX 17\u201320, but actual ranges were 0.60\u20131.05% \u2014 QUIET-like on 4 of 5 days.",
+  "Oil/Iran headlines had no open\u2192close effect again (W6 now 14 days of evidence): Brent hit $116, SPY didn't care.",
+  "The AI-capex driver was under-weighted on 10-22 (earnings cluster kept selling all day) and over-weighted on 10-23 (day-2 bounce, now rule R2)."
+ ],
+ "improve": [
+  "Add a 6:20 AM PT gap recheck push: gap size, whether R1 fires, VIX.",
+  "Grade the first 15 minutes, not just the close \u2014 that is the window actually traded.",
+  "Call NO EDGE when the final probability is under 53% instead of a 51% lean.",
+  "Recalibrate day type with the last 10 days' realized range alongside VIX.",
+  "Prune the watching list from 16 to ~8 (drop W8 at 2 of 5, merge W13 into W15)."
+ ],
+ "trading_notes": [
+  "Best mechanics yet: cheaper premiums, out within 5\u201315 minutes of the open, one contract, no averaging.",
+  "All 3 losses this month came on days the trade followed the brief; the 4 trades against it went 4\u20130. Small sample, consistent message.",
+  "Average loss is about 2\u00d7 the average win \u2014 a stop near \u221230% of premium fixes the ratio.",
+  "Behind the 5%/day path; the risk is sizing up to catch up."
+ ],
+ "rule_changes": [
+  "R2 adopted (day-2 sector selloff: score 0, cap 52%)",
+  "W16 and W17 added to watching"
+ ]
+}
