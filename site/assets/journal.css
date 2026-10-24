@@ -159,3 +159,4 @@ dialog p { line-height: 1.5; }
 .more-grid label { display: block; font-size: 10px; margin-bottom: 3px; color: var(--muted); font-weight: 650; text-transform: uppercase; letter-spacing: .04em; }
 .more-grid input, .more-grid select { padding: 6px; font-size: 12px; }
 @media (max-width: 680px) { .sitebar { padding: 10px 14px; } .more-grid > div { grid-column: span 6; } }
+[hidden] { display: none !important; }
