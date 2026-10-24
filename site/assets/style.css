@@ -302,3 +302,6 @@ details.fold .linkbtn { margin-top: 6px; }
 .chips.plain { margin-top: 0; padding-top: 0; border-top: 0; }
 .chips.plain .chip { white-space: normal; }
 @media (min-width: 860px) { .about { grid-template-columns: 1.1fr 1fr; } }
+
+img.avatar { object-fit: cover; padding: 0; width: 64px; height: 64px; }
+@media (min-width: 860px) { img.avatar { width: 76px; height: 76px; } }
