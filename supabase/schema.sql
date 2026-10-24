@@ -1,12 +1,12 @@
 -- erikortega.com — Supabase schema
--- Paste into Supabase → SQL Editor → New query → Run. Safe to run once on a new project.
+-- Applied to project dthvmmjzlazsgybgzmtb on 2026-10-23 (migration journal_schema).
 --
 -- Journal: dollar amounts are private (only the owner, logged in, can read or write them).
 -- The public sees only percentages through the journal_public view.
 
 -- Owner check: the only account allowed to read/write private data.
 create or replace function public.is_owner() returns boolean
-language sql stable as $$
+language sql stable set search_path = '' as $$
   select coalesce(auth.jwt() ->> 'email', '') = 'erik@erikortega.com'
 $$;
 
@@ -61,12 +61,14 @@ drop policy if exists owner_all on public.journal_settings;
 drop policy if exists owner_all on public.journal_entries;
 drop policy if exists owner_all on public.journal_trades;
 drop policy if exists owner_all on public.journal_attachments;
-create policy owner_all on public.journal_settings    for all using (public.is_owner()) with check (public.is_owner());
-create policy owner_all on public.journal_entries     for all using (public.is_owner()) with check (public.is_owner());
-create policy owner_all on public.journal_trades      for all using (public.is_owner()) with check (public.is_owner());
-create policy owner_all on public.journal_attachments for all using (public.is_owner()) with check (public.is_owner());
+create policy owner_all on public.journal_settings    for all to authenticated using ((select public.is_owner())) with check ((select public.is_owner()));
+create policy owner_all on public.journal_entries     for all to authenticated using ((select public.is_owner())) with check ((select public.is_owner()));
+create policy owner_all on public.journal_trades      for all to authenticated using ((select public.is_owner())) with check ((select public.is_owner()));
+create policy owner_all on public.journal_attachments for all to authenticated using ((select public.is_owner())) with check ((select public.is_owner()));
 
 -- ── Public view: percentages only, no dollar amounts ──────────────────────
+-- Runs with the view owner's rights on purpose (Supabase flags this as 'security definer view'):
+-- it is the only window anon has, and it exposes percentages only.
 create or replace view public.journal_public as
 with s as (
   select (select value::numeric from public.journal_settings where key = 'start_balance') as start_balance
@@ -96,6 +98,7 @@ create or replace view public.journal_public_settings as
 select key, value from public.journal_settings where key in ('start_date', 'daily_rate');
 
 revoke all on public.journal_settings, public.journal_entries, public.journal_trades, public.journal_attachments from anon;
+revoke all on public.journal_public, public.journal_public_settings from anon, authenticated;
 grant select on public.journal_public, public.journal_public_settings to anon, authenticated;
 
 -- ── Private storage for screenshots ───────────────────────────────────────
