@@ -4,125 +4,235 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SPY Pre-Market Brief · Erik Ortega</title>
-<meta name="description" content="Daily SPY 0DTE pre-market brief: the call, the math, and how it graded.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="description" content="Daily SPY pre-market brief: one GREEN or RED call before the bell, the math behind it, and how it graded.">
+<meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
 <script src="/assets/app.js"></script>
 </head>
 <body>
+<nav class="sitebar" aria-label="Site"><a class="brand" href="/">erik<b>ortega</b>.com</a>
+<a href="/">Home</a><a href="/brief.html" class="on" aria-current="page">Brief</a><a href="/weekly.html">Weekly</a><a href="/journal.html">Journal</a><a href="/diary.html">Diary</a></nav>
 <main class="wrap">
-  <h1>SPY Pre-Market Brief</h1>
-  <p class="lede">Every weekday before the open: a GREEN/RED call on SPY's close vs. its 9:30 open, with the math behind it. Graded after the close. Not financial advice.</p>
-
-  <h2>Record</h2>
-  <div class="tiles" id="tiles"></div>
-
-  <h2>Every call</h2>
-  <div class="card">
-    <div class="strip" id="strip"></div>
-    <div class="legend"><span class="ok">■ hit</span><span class="no">■ miss</span><span class="muted">■ pending / flat</span></div>
-  </div>
-
-  <h2>Calibration</h2>
-  <div class="card">
-    <h3>Running Brier score <span class="muted" style="font-weight:400;font-size:13px">— lower is better; the dashed line is always guessing 50%</span></h3>
-    <div id="brierChart"></div>
-  </div>
-
-  <section id="day"></section>
-
-  <h2>Active rules</h2>
-  <div class="card" id="rules"></div>
-
-  <footer>Data: the brief's own ledger. Prices from public quote pages at grading time. <a href="/weekly.html">Weekly reviews →</a></footer>
+  <div class="eyebrow">SPY pre-market brief</div>
+  <h1 class="title">One call before the bell</h1>
+  <p class="sub">Every weekday by 8 AM ET: GREEN or RED on SPY's close vs its 9:30 open, with the math. Graded after the close. Not financial advice.</p>
+  <div id="app" aria-live="polite"><div class="dayNav"><span class="small muted">Loading the ledger…</span></div></div>
+  <footer>Data: the brief's own ledger. Prices from public quote pages at grading time.</footer>
 </main>
 <script>
-renderNav("Brief");
 (async () => {
-  const idx = await getJSON("/data/briefs/index.json");
-  const days = idx.days.sort((a, b) => a.date.localeCompare(b.date));
+  const app = $("#app");
+  const notice = (t) => { app.innerHTML = `<div class="board nocall" style="margin-top:24px"><p class="notice" style="margin:0">${esc(t)}</p></div>`; };
+  let idx;
+  try { idx = await getJSON("/data/briefs/index.json"); } catch { return notice("The brief ledger didn't load. Refresh, or check back after 8 AM ET."); }
+  const days = (idx.days || []).filter((x) => x && x.date).sort((a, b) => a.date.localeCompare(b.date));
+  if (!days.length) return notice("The first call posts before the next open.");
+
   const want = new URLSearchParams(location.search).get("d");
-  const sel = days.find((d) => d.date === want) || days[days.length - 1];
-  const R = record(days);
+  let i = days.findIndex((x) => x.date === want);
+  if (i < 0) i = days.length - 1;
+  const row = days[i], prev = days[i - 1], next = days[i + 1];
+  const [file, L] = await Promise.all([
+    getJSON(`/data/briefs/${row.date}.json`).catch(() => null),
+    getJSON("/data/lessons.json").catch(() => null),
+  ]);
+  const d = Object.assign({}, row, file || {});
+  const b = d.brief && typeof d.brief === "object" ? d.brief : null;
+  const R = record(days), G = gapRecord(days), S = streaks(days);
+  let h = "";
 
-  $("#tiles").innerHTML = [
-    ["Close call", `${R.w}–${R.l}`, `${R.n} graded`],
-    ["Hit rate", R.hit == null ? "—" : R.hit.toFixed(0) + "%", "coin flip = 50%"],
-    ["Brier", R.brier == null ? "—" : R.brier.toFixed(3), "50% guess = 0.250"],
-    ["First hour", `${R.fhW}–${R.fhL}`, "9:30–10:30 ET"],
-  ].map(([k, v, s]) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join("");
+  // 2. Day nav
+  h += `<nav class="dayNav" aria-label="Day">
+    ${prev ? `<a class="btn" href="?d=${prev.date}" rel="prev">‹ ${esc(dowDate(prev.date))}</a>` : `<span class="btn" aria-disabled="true">‹ Prev</span>`}
+    <span class="small muted">Day ${i + 1} of the ledger</span>
+    ${next ? `<a class="btn" href="?d=${next.date}" rel="next">Next ›</a>` : `<span class="btn" aria-disabled="true">Next ›</span>`}</nav>`;
 
-  $("#strip").innerHTML = days.map((d) => {
-    const c = d.correct === true ? "hit" : d.correct === false ? "miss" : "";
-    const glyph = d.call === "GREEN" ? "▲" : d.call === "RED" ? "▼" : "·";
-    return `<a class="${c}" href="?d=${d.date}" title="${esc(d.date)} · called ${esc(d.call || "none")} · ${esc(d.result || "pending")}"${d.date === sel.date ? ' aria-current="true"' : ""}>${glyph}<span>${dateParts(d.date).d}</span></a>`;
-  }).join("");
+  // 3. Day hero
+  const vcls = /RISK-ON/i.test(d.verdict || "") ? "green" : /RISK-OFF/i.test(d.verdict || "") ? "red" : /MIXED/i.test(d.verdict || "") ? "gold" : "";
+  const gapDiff = isNum(d.gap_call) && isNum(d.actual_gap) && Math.sign(d.gap_call) && Math.sign(d.actual_gap) && Math.sign(d.gap_call) !== Math.sign(d.actual_gap);
+  const fhr = d.first_hour_result;
+  const fh = !fhr ? `<span class="muted">–</span>`
+    : fhr === "GREEN" || fhr === "RED" ? `<span class="${fhr === "GREEN" ? "green" : "red"}">${callTxt(fhr)}</span>${d.first_hour_correct === true ? ' <span class="green">✓</span>' : d.first_hour_correct === false ? ' <span class="red">✗</span>' : ""}`
+    : `<span class="muted">${esc(fhr)}</span>`;
+  h += `<div class="split3">
+    <section class="${boardCls(d)}" aria-label="Call for ${esc(longDate(d.date))}">
+      <div class="top"><span class="eyebrow">${esc(longDate(d.date))}</span>${statusChip(d)}</div>
+      ${bigCall(d)}
+      <div class="gauge" id="gauge"></div>
+      <div class="facts">
+        <div><div class="k">Verdict</div><div class="v ${vcls}">${esc(d.verdict || "–")}</div></div>
+        <div><div class="k">Day type · VIX</div><div class="v"><span class="nw">${esc(d.day_type || "–")} ·</span> <span class="nw">${isNum(d.vix) ? Number(d.vix).toFixed(1) : "–"}</span></div></div>
+        <div><div class="k">Gap called / actual</div><div class="v"><span class="nw">${signed(d.gap_call)} /</span> <span class="nw${gapDiff ? " red" : ""}">${signed(d.actual_gap)}${gapDiff ? " ✗" : ""}</span></div></div>
+        <div><div class="k">First hour</div><div class="v"><span class="nw">${fh}</span></div></div>
+      </div>
+      <div class="range" id="range"></div>
+    </section>`;
 
-  // running Brier
-  const graded = days.filter((d) => d.brier != null);
-  let sum = 0;
-  const run = graded.map((d, i) => (sum += d.brier) / (i + 1));
-  lineChart($("#brierChart"), {
-    title: "Running Brier score",
-    labels: graded.map((d) => shortDate(d.date)),
-    series: [{ name: "Brier", values: run, color: "var(--series)" }],
-    baseline: 0.25, yFmt: (v) => v.toFixed(3),
+  // 4. What the brief is actually good at
+  h += `<section class="card compare" aria-label="What the brief is actually good at">
+      <h3>What the brief is actually good at</h3>
+      <p class="small muted" style="margin:0 0 6px">Hit rate per claim, all ${R.n} graded day${R.n === 1 ? "" : "s"}. Dashed line is a coin flip.</p>
+      ${compareRow("Gap direction", "up or down open", G.w, G.l)}
+      ${compareRow("First hour", "9:30–10:30", R.fhW, R.fhL)}
+      ${compareRow("Close call", "the headline", R.w, R.l)}
+      <div class="statrow"><span>Brier <b>${R.brier == null ? "—" : R.brier.toFixed(3)}</b> <span class="faint">(50% guess = 0.250)</span></span><span>Streak <b>${S.cur} ✓</b></span><span>Best <b>${S.best}</b></span></div>
+    </section></div>`;
+
+  // 5. Every call — calendar
+  const byDate = Object.fromEntries(days.map((x) => [x.date, x]));
+  const slots = [];
+  const lead = (dateParts(days[0].date).wd + 6) % 7;
+  for (let k = 0; k < Math.min(lead, 5); k++) slots.push(null);
+  for (let dt = days[0].date; dt <= days[days.length - 1].date; dt = isoAdd(dt, 1)) {
+    const wd = dateParts(dt).wd;
+    if (wd === 0 || wd === 6) continue;
+    slots.push(byDate[dt] || null);
+  }
+  const rows = Math.ceil(slots.length / 5), collapse = days.length > 40, firstShown = collapse ? Math.max(0, rows - 8) * 5 : 0;
+  let lastM = null, cal = ["Mon", "Tue", "Wed", "Thu", "Fri"].map((x) => `<div class="wd" aria-hidden="true">${x}</div>`).join("");
+  slots.forEach((x, k) => {
+    const gone = k < firstShown ? " gone" : "";
+    if (!x) { cal += `<div class="cd empty${gone}" aria-hidden="true"></div>`; return; }
+    const p = dateParts(x.date), newM = p.m !== lastM || k === firstShown; lastM = p.m;
+    const cls = x.correct === true ? "hit" : x.correct === false ? "miss" : "";
+    const rs = x.correct === true ? `<span class="green">✓ hit</span>` : x.correct === false ? `<span class="red">✗ miss</span>`
+      : `<span class="muted">– ${x.result === "FLAT" ? "flat" : x.result ? esc(String(x.result).toLowerCase()) : "live"}</span>`;
+    const word = x.correct === true ? "hit" : x.correct === false ? "miss" : x.result === "FLAT" ? "flat" : x.result ? String(x.result).toLowerCase() : "not graded yet";
+    const pr = x.call && isNum(x.prob) ? Math.round(x.prob * 100) : "";
+    cal += `<a class="cd ${cls}${x.date === d.date ? " sel" : ""}${gone}" href="?d=${x.date}" aria-label="${esc(dowDate(x.date))}: ${x.call ? `called ${esc(x.call)} ${pr}%` : "no call"}, ${esc(word)}"${x.date === d.date ? ' aria-current="date"' : ""}>
+      <div class="dt">${newM ? `${p.m}/${p.d}` : p.d}</div>
+      <div class="cl ${x.call === "GREEN" ? "green" : x.call === "RED" ? "red" : "muted"}">${callGlyph(x.call)} ${pr}</div>
+      <div class="rs">${rs}</div></a>`;
   });
+  const streakLine = S.cur >= 3
+    ? `<span class="arcade" role="img" aria-label="Current hit streak ${S.cur}"><span>STREAK</span><b>${S.cur}</b></span><span>Best <b>${S.best}</b></span>`
+    : `<span>Streak <b>${S.cur} ✓</b></span><span>Best <b>${S.best}</b></span>`;
+  h += `<div class="sec-h"><h2>Every call</h2><span class="aside">▲ called GREEN · ▼ called RED · tap a day</span></div>
+    <div class="card"><div class="cal" id="cal">${cal}</div>
+    ${collapse ? `<button type="button" class="linkbtn mt3" id="calAll">Show all ${days.length} days</button>` : ""}
+    <div class="legend" style="margin-top:12px"><span><b class="green">✓</b> hit</span><span><b class="red">✗</b> miss</span><span>– pending / flat</span></div>
+    <div class="statrow">${streakLine}</div></div>`;
 
-  // selected day
-  let d;
-  try { d = await getJSON(`/data/briefs/${sel.date}.json`); } catch { d = sel; }
-  const i = days.findIndex((x) => x.date === sel.date);
-  const prev = days[i - 1], next = days[i + 1];
-  const graded1 = d.correct === true || d.correct === false;
-  const move = d.open != null && d.close != null ? ((d.close - d.open) / d.open) * 100 : null;
-  const b = d.brief || {};
-  let h = `<h2>${esc(longDate(d.date))}</h2><div class="card">
-    <div class="row" style="justify-content:space-between;align-items:center">
-      <div>${prev ? `<a class="btn" href="?d=${prev.date}">← ${shortDate(prev.date)}</a>` : ""}</div>
-      <div style="text-align:right">${next ? `<a class="btn" href="?d=${next.date}">${shortDate(next.date)} →</a>` : ""}</div>
-    </div>
-    <div class="hero-call" style="margin-top:14px">
-      <div class="big ${d.call === "GREEN" ? "green" : d.call === "RED" ? "red" : ""}">${d.call ? (d.call === "GREEN" ? "▲ " : "▼ ") + esc(d.call) : "NO CALL"} ${d.prob != null ? Math.round(d.prob * 100) + "%" : ""}</div>
-      <div class="muted mono">SPY close vs 9:30 open</div>
-      ${graded1 ? `<span class="badge ${d.correct ? "green" : "red"}">${d.correct ? "HIT ✓" : "MISS ✗"}</span>` : d.result === "FLAT" ? `<span class="badge flat">FLAT</span>` : `<span class="badge none">NOT GRADED YET</span>`}
-    </div>
-    <div class="tiles" style="margin-top:14px">
-      <div class="tile"><div class="k">Verdict</div><div class="v" style="font-size:16px">${esc(d.verdict || "—")}</div></div>
-      <div class="tile"><div class="k">Day type · VIX</div><div class="v" style="font-size:16px">${esc(d.day_type || "—")} · ${num(d.vix)}</div></div>
-      <div class="tile"><div class="k">Gap: called / actual</div><div class="v" style="font-size:16px">${signed(d.gap_call)} / ${signed(d.actual_gap)}</div><div class="s">SPY points</div></div>
-      <div class="tile"><div class="k">Open → close</div><div class="v" style="font-size:16px">${d.open != null ? num(d.open) + " → " + num(d.close) : "—"}</div><div class="s">${move == null ? "" : pct(move)}</div></div>
-      <div class="tile"><div class="k">First hour</div><div class="v" style="font-size:16px">${esc(d.first_hour_result || "—")} ${mark(d.first_hour_correct)}</div><div class="s">${d.first_hour_price != null ? "@10:30 " + num(d.first_hour_price) : ""}</div></div>
-    </div>`;
-  if (b.instruments && b.instruments.length) {
-    h += `<h2>Pre-market tape${b.quotes_time ? ` <span class="muted">· ${esc(b.quotes_time)}</span>` : ""}</h2><div class="scroll"><table class="tbl"><thead><tr><th>Instrument</th><th class="num">Level</th><th class="num">Change</th><th>Signal</th></tr></thead><tbody>` +
-      b.instruments.map((r) => `<tr><td class="mono">${esc(r.name)}</td><td class="num">${esc(r.level)}</td><td class="num ${r.signal === "risk-off" ? "no" : r.signal === "risk-on" ? "ok" : ""}">${esc(r.change)}</td><td>${esc(r.signal || "")}</td></tr>`).join("") +
-      `</tbody></table></div>${b.risk_off_count != null ? `<p class="muted mono" style="font-size:12px">${b.risk_off_count} of 7 risk-off</p>` : ""}`;
-  }
-  if (b.sections) {
-    for (const [name, items] of Object.entries(b.sections)) {
-      h += `<h2>${esc(name)}</h2>` + (items && items.length ? `<ul class="clean">${items.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="muted">nothing</p>`);
-    }
-  }
-  if (b.trade) h += `<h2>The trade</h2><p>${esc(b.trade)}</p>`;
-  if (d.drivers) h += `<h2>Drivers</h2><p>${esc(d.drivers)}</p>`;
-  if (d.wrong_if) h += `<h2>Wrong if</h2><p class="muted">${esc(d.wrong_if)}</p>`;
-  if (d.recheck) h += `<h2>9:25 recheck</h2><p>${esc(typeof d.recheck === "string" ? d.recheck : JSON.stringify(d.recheck))}</p>`;
-  h += `<div style="margin-top:12px">`;
-  if (d.math) h += `<details><summary>The math</summary><div class="body">${esc(d.math)}</div></details>`;
-  if (d.review) h += `<details open><summary>How it graded</summary><div class="body">${esc(d.review)}</div></details>`;
-  if (d.first_hour_note) h += `<details><summary>First hour</summary><div class="body">${esc(d.first_hour_note)}</div></details>`;
-  h += `</div></div>`;
-  $("#day").innerHTML = h;
+  // 6. Is it getting better?
+  const gd = days.filter((x) => x.correct === true || x.correct === false), bd = days.filter((x) => isNum(x.brier));
+  h += `<div class="sec-h"><h2>Is it getting better?</h2><span class="aside">running, all graded days</span></div>`;
+  h += gd.length ? `<div class="split">
+      <div class="card"><h3>Hit rate</h3><div class="chart" id="hitChart"></div><div class="legend"><span><i style="background:var(--blue)"></i>running hit rate</span><span><i class="dash"></i>coin flip 50%</span></div></div>
+      <div class="card"><h3>Brier score <span class="small muted" style="font-weight:500">lower is better</span></h3><div class="chart" id="brierChart"></div><div class="legend"><span><i style="background:var(--gold)"></i>running Brier</span><span><i class="dash"></i>always-50% = 0.250</span></div></div>
+    </div>` : `<div class="card"><p class="notice" style="margin:0">Charts start after the first graded day.</p></div>`;
 
-  try {
-    const L = await getJSON("/data/lessons.json");
-    $("#rules").innerHTML = (L.active || []).length
-      ? `<ul class="clean">${L.active.map((r) => { const m = r.match(/^(R\d+)[\s\S]*?—\s*(When[\s\S]*)$/); return `<li><b class="mono">${esc(m ? m[1] : "")}</b> ${esc(m ? m[2] : r)}</li>`; }).join("")}</ul><p class="muted" style="font-size:12px;margin:8px 0 0">${L.watching_count ?? 0} more patterns being watched. A rule needs 3+ dated examples and a winning look-back before it's adopted.</p>`
-      : `<p class="muted">No active rules yet.</p>`;
-  } catch { $("#rules").innerHTML = `<p class="muted">—</p>`; }
-})().catch((e) => { $("#day").innerHTML = `<p class="notice">Couldn't load the brief data (${esc(e.message)}).</p>`; });
+  // 7. Pre-market tape / day-type meter
+  const inst = b && Array.isArray(b.instruments) ? b.instruments.filter(Boolean) : [];
+  const rangePct = isNum(d.high) && isNum(d.low) && isNum(d.open) && d.open ? ((d.high - d.low) / d.open) * 100 : null;
+  const meter = `<div class="card"><h3>Day-type meter</h3><div class="chart" id="vixMeter"></div>
+    <p class="small muted" style="margin:6px 0 0">${isNum(d.vix) ? `VIX ${num(d.vix)} reads ${esc(d.day_type || "–")}.` : `Day type ${esc(d.day_type || "–")}.`}${rangePct != null ? ` Realized range ${rangePct.toFixed(2)}%.` : ""}</p></div>`;
+  if (inst.length) {
+    const offN = isNum(b.risk_off_count) ? Number(b.risk_off_count) : inst.filter((r) => r.signal === "risk-off").length;
+    const tr = inst.map((r) => {
+      let c = String(r.change ?? "").trim();
+      let g = /^▲/.test(c) ? "▲" : /^▼/.test(c) ? "▼" : "";
+      c = c.replace(/^[▲▼]\s*/, "");
+      if (/^\+/.test(c)) g = "▲"; else if (/^[-−]/.test(c)) g = "▼";
+      c = c.replace(/^[+\-−]\s*/, "");
+      const sig = r.signal === "risk-on" ? "on" : r.signal === "risk-off" ? "off" : "";
+      return `<tr><td><b>${esc(r.name)}</b></td><td class="n">${esc(r.level)}</td><td class="n ${sig === "off" ? "red" : sig === "on" ? "green" : ""}">${g ? g + " " : ""}${esc(c)}</td><td class="n">${sig ? `<span class="sig ${sig}">risk-${sig}</span>` : ""}</td></tr>`;
+    }).join("");
+    h += `<div class="sec-h"><h2>Pre-market tape</h2>${b.quotes_time ? `<span class="aside">quotes ~${esc(b.quotes_time)}</span>` : ""}</div>
+      <div class="split">
+        <div class="card" style="padding:8px 12px"><div class="scroll"><table class="tape">
+          <caption class="sr-only">Pre-market quotes and their risk signal</caption>
+          <thead><tr><th scope="col">Instrument</th><th scope="col" class="n">Level</th><th scope="col" class="n">Change</th><th scope="col" class="n">Signal</th></tr></thead>
+          <tbody>${tr}</tbody></table></div></div>
+        <div class="grid">
+          <div class="card"><h3>Risk read</h3>
+            <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap"><div class="pips" aria-hidden="true">${inst.map((r) => `<i class="${r.signal === "risk-off" ? "off" : ""}"></i>`).join("")}</div><b>${offN} of ${inst.length} risk-off</b></div></div>
+          ${meter}
+        </div>
+      </div>`;
+  } else {
+    h += `<div class="sec-h"><h2>Day type</h2></div>${meter}`;
+  }
+
+  // 8. What moved the call
+  let moved = "";
+  if (b && b.sections && typeof b.sections === "object") {
+    const cards = Object.entries(b.sections).map(([name, items]) => {
+      const arr = Array.isArray(items) ? items.filter((x) => x != null && x !== "") : items ? [items] : [];
+      return `<div class="card news"><h3>${esc(name)} <span class="chip n">${arr.length}</span></h3>${arr.length ? `<ul>${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="small faint" style="margin:0">Nothing new.</p>`}</div>`;
+    }).join("");
+    if (cards) moved += `<div class="newsgrid">${cards}</div>`;
+  }
+  const extra = [];
+  if (b && b.trade) extra.push(`<div class="card tradecard"><h3>The trade</h3><p class="prose">${esc(b.trade)}</p></div>`);
+  if (d.drivers) extra.push(`<div class="card"><h3>Drivers</h3><p class="prose">${esc(d.drivers)}</p></div>`);
+  if (d.wrong_if) extra.push(`<div class="card wrongif"><h3 class="gold">Wrong if</h3><p class="prose">${esc(d.wrong_if)}</p></div>`);
+  if (d.recheck != null && d.recheck !== "") {
+    const flat = (v) => (v == null ? "–" : typeof v === "object" ? (Array.isArray(v) ? v.map(flat).join(", ") : Object.entries(v).map(([k, x]) => `${k.replace(/_/g, " ")}: ${flat(x)}`).join("; ")) : String(v));
+    const body = typeof d.recheck === "object" && !Array.isArray(d.recheck)
+      ? `<dl class="kv">${Object.entries(d.recheck).map(([k, v]) => `<dt>${esc(k.replace(/_/g, " "))}</dt><dd>${esc(flat(v))}</dd>`).join("")}</dl>`
+      : `<p class="prose">${esc(flat(d.recheck))}</p>`;
+    extra.push(`<div class="card"><h3>9:25 recheck</h3>${body}</div>`);
+  }
+  if (extra.length) moved += `<div class="grid${moved ? " mt3" : ""}">${extra.join("")}</div>`;
+  if (moved) h += `<div class="sec-h"><h2>What moved the call</h2></div>${moved}`;
+
+  // 9. Collapsibles
+  const folds = fold("How it graded", d.review, true) + fold("The math", d.math, false) + fold("First hour", d.first_hour_note, false);
+  if (folds) h += `<div class="card folds mt3">${folds}</div>`;
+
+  // 10. Rules the brief has learned
+  if (L) {
+    const act = Array.isArray(L.active) ? L.active : [];
+    const ruleCard = (s) => {
+      s = String(s ?? "");
+      try {
+        const id = (s.match(/^(R\d+)/) || [])[1];
+        const adopted = (s.match(/adopted (\d{4}-\d{2}-\d{2})/) || [])[1];
+        const since = s.match(/since adopted:\s*(\d+)-(\d+)/);
+        const look = s.match(/look-back:\s*right (\d+) of (\d+)/);
+        const body = (s.match(/—\s*(When[\s\S]*)$/) || [])[1] || s;
+        const chips = [];
+        if (since) { const w = +since[1], l = +since[2]; chips.push(`<span class="chip ${w > l ? "g" : w < l ? "r" : "n"}">${w}–${l} since adopted</span>`); }
+        if (look) chips.push(`<span class="chip n">look-back ${look[1]} of ${look[2]}</span>`);
+        return `<div class="card rule"${id ? "" : ' style="padding-left:16px"'}>${id ? `<div class="id" aria-hidden="true">${esc(id)}</div>` : ""}
+          ${adopted ? `<div class="small muted">${id ? `<span class="sr-only">${esc(id)} · </span>` : ""}adopted ${esc(shortDate(adopted))}</div>` : id ? `<div class="sr-only">${esc(id)}</div>` : ""}
+          <p>${esc(body).replace(/\b(When|then)\b/g, "<b>$1</b>")}</p>${chips.length ? `<div class="meta">${chips.join("")}</div>` : ""}</div>`;
+      } catch { return `<div class="card rule" style="padding-left:16px"><p>${esc(s)}</p></div>`; }
+    };
+    h += `<div class="sec-h"><h2>Rules the brief has learned</h2>${isNum(L.watching_count) ? `<span class="aside">${Number(L.watching_count)} more being watched</span>` : ""}</div>`;
+    h += act.length ? `<div class="rules">${act.map(ruleCard).join("")}</div>` : `<div class="card"><p class="notice" style="margin:0">No active rules yet. Patterns are being watched.</p></div>`;
+    h += `<p class="small faint" style="margin-top:10px">A rule needs 3+ dated examples and a winning look-back before it's adopted.</p>`;
+  }
+
+  app.innerHTML = h;
+
+  // Charts + interactions
+  gauge($("#gauge"), d);
+  rangeBar($("#range"), d);
+  vixMeter($("#vixMeter"), d.vix, d.day_type);
+  if (gd.length) {
+    let w = 0;
+    const hit = gd.map((x, k) => ((w += x.correct ? 1 : 0), (w / (k + 1)) * 100));
+    const top = Math.min(100, Math.max(75, Math.ceil(Math.max(...hit) / 25) * 25));
+    lineChart($("#hitChart"), { values: hit, labels: gd.map((x) => shortDate(x.date)), color: "var(--blue)", base: 50, lo: 0, hi: top,
+      ticks: [0, 25, 50, 75, 100].filter((t) => t <= top), fmt: (v) => Math.round(v) + "%", label: `Running hit rate, now ${Math.round(hit[hit.length - 1])}%, against a 50% coin flip` });
+  }
+  if (bd.length && $("#brierChart")) {
+    let s = 0;
+    const br = bd.map((x, k) => (s += Number(x.brier)) / (k + 1));
+    const dom = niceDomain(Math.min(...br, 0.25), Math.max(...br, 0.25), 4);
+    lineChart($("#brierChart"), { values: br, labels: bd.map((x) => shortDate(x.date)), color: "var(--gold)", base: 0.25, lo: dom.lo, hi: dom.hi,
+      ticks: dom.ticks, fmt: (v) => v.toFixed(3), label: `Running Brier score, now ${br[br.length - 1].toFixed(3)}; always guessing 50% scores 0.250; lower is better` });
+  } else if ($("#brierChart")) $("#brierChart").innerHTML = `<p class="small muted">No Brier scores yet.</p>`;
+  const more = $("#calAll");
+  if (more) more.addEventListener("click", () => { document.querySelectorAll("#cal .gone").forEach((c) => c.classList.remove("gone")); more.remove(); });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) return;
+    if (e.key === "ArrowLeft" && prev) location.search = `?d=${prev.date}`;
+    if (e.key === "ArrowRight" && next) location.search = `?d=${next.date}`;
+  });
+})().catch((e) => { $("#app").innerHTML = `<div class="board nocall" style="margin-top:24px"><p class="notice" style="margin:0">The brief ledger didn't load. Refresh, or check back after 8 AM ET.</p></div>`; console.warn(e); });
 </script>
 </body>
 </html>

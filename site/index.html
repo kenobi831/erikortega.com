@@ -4,51 +4,156 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Erik Ortega</title>
-<meta name="description" content="Erik Ortega — builder from Salinas, CA. Daily SPY pre-market briefs, a trading journal, and a family diary.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="description" content="Erik Ortega — builder from Salinas, CA. A daily SPY call before the open, graded after the close, plus the trading journal behind it.">
+<meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/assets/app.js"></script>
 </head>
 <body>
+<nav class="sitebar" aria-label="Site"><a class="brand" href="/">erik<b>ortega</b>.com</a>
+<a href="/" class="on" aria-current="page">Home</a><a href="/brief.html">Brief</a><a href="/weekly.html">Weekly</a><a href="/journal.html">Journal</a><a href="/diary.html">Diary</a></nav>
 <main class="wrap">
-  <h1 style="font-size:34px;margin-top:40px">Erik Ortega</h1>
-  <p class="lede">Builder from Salinas, California. Construction and field work turned into software and businesses. This is where I keep my trading, my lessons, and my family's story.</p>
-
-  <h2>Today</h2>
-  <a href="/brief.html" class="card" id="today" style="display:block;text-decoration:none"><span class="muted">Loading the latest brief…</span></a>
-
-  <h2>Sections</h2>
-  <div class="grid cols-3">
-    <a class="card" href="/brief.html" style="text-decoration:none"><h3>Pre-Market Brief</h3><p class="muted" style="margin:0" id="briefRec">Daily SPY call before the open, graded after the close.</p></a>
-    <a class="card" href="/weekly.html" style="text-decoration:none"><h3>Weekly Review</h3><p class="muted" style="margin:0" id="weekLine">What worked, what didn't, what changes.</p></a>
-    <a class="card" href="/journal.html" style="text-decoration:none"><h3>Compound Journal</h3><p class="muted" style="margin:0" id="jLine">The 5% Daily Compound Challenge.</p></a>
-    <a class="card" href="/diary.html" style="text-decoration:none"><h3>Diary</h3><p class="muted" style="margin:0">Memoirs and family pictures. Coming soon.</p></a>
+  <div class="intro">
+    <div class="avatar" aria-hidden="true">EO</div>
+    <p><b>Erik Ortega.</b> Builder from Salinas, CA. I call SPY every morning before the open, trade it, and grade myself here. Wins and misses both stay up.</p>
   </div>
-  <footer>© Erik Ortega · Salinas, CA</footer>
+
+  <div class="homeTop">
+    <a class="board nocall" href="/brief.html" id="hero" aria-live="polite">
+      <div class="top"><span class="eyebrow">Today's call</span><span class="live pending"><i></i>Loading…</span></div>
+      <div class="bigcall"><span class="dir call none" style="animation:none">&nbsp;</span></div>
+    </a>
+    <div class="side">
+      <div class="dash">
+        <a class="card tile" href="/journal.html" id="jTile">
+          <span class="go">Journal ›</span>
+          <div class="k">Account since start</div>
+          <div class="v">—</div>
+          <div class="s">Loading the live ledger…</div>
+        </a>
+        <a class="card tile" href="/brief.html" id="recTile">
+          <span class="go">Brief ›</span>
+          <div class="ringwrap"><div><div class="k">Brief record</div><div class="v">—</div><div class="s">&nbsp;</div></div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div id="weekWrap" hidden></div>
+
+  <div class="sec-h"><h2>Sections</h2></div>
+  <div class="sections">
+    <a class="card" href="/brief.html"><div class="ic g" aria-hidden="true">▲</div><h3>Pre-market brief</h3><p>Daily SPY call before the open, graded after the close.</p></a>
+    <a class="card" href="/weekly.html"><div class="ic b" aria-hidden="true">7</div><h3>Weekly review</h3><p>What worked, what didn't, what changes.</p></a>
+    <a class="card" href="/journal.html"><div class="ic y" aria-hidden="true">%</div><h3>Compound journal</h3><p>The 5% daily compound challenge.</p></a>
+    <a class="card soon" href="/diary.html"><div class="ic m" aria-hidden="true">♥</div><h3>Diary</h3><p>Family memoirs and pictures. Coming soon.</p></a>
+  </div>
+  <footer>© Erik Ortega · Salinas, CA · Not financial advice. Journal figures are percentages only.</footer>
 </main>
 <script>
-renderNav("Home");
 (async () => {
-  const idx = await getJSON("/data/briefs/index.json");
-  const days = idx.days.sort((a, b) => a.date.localeCompare(b.date));
-  const d = days[days.length - 1], R = record(days);
-  const status = d.correct === true ? `<span class="badge green">HIT ✓</span>` : d.correct === false ? `<span class="badge red">MISS ✗</span>` : `<span class="badge none">LIVE</span>`;
-  $("#today").innerHTML = `<div class="muted mono" style="font-size:12px">${esc(longDate(d.date))}</div>
-    <div class="hero-call" style="margin-top:6px"><div class="big ${d.call === "GREEN" ? "green" : d.call === "RED" ? "red" : ""}" style="font-size:30px">${d.call ? (d.call === "GREEN" ? "▲ " : "▼ ") + esc(d.call) : "NO CALL"} ${d.prob != null ? Math.round(d.prob * 100) + "%" : ""}</div>${status}</div>
-    <div class="muted mono" style="font-size:12px;margin-top:8px">${esc(d.verdict || "")} · ${esc(d.day_type || "")} · VIX ${num(d.vix)} · record ${R.w}–${R.l}</div>`;
-  $("#briefRec").textContent = `Record ${R.w}–${R.l} · Brier ${R.brier == null ? "—" : R.brier.toFixed(3)} · ${R.n} graded.`;
-})().catch(() => { $("#today").innerHTML = `<span class="muted">No brief yet.</span>`; });
-getJSON("/data/weeks/index.json").then((w) => { const x = w.weeks.sort((a, b) => b.start.localeCompare(a.start))[0]; if (x) $("#weekLine").textContent = `${shortDate(x.start)}: ${x.headline}`; }).catch(() => {});
+  // ── Scoreboard hero + record tile (brief ledger) ─────────────────────
+  const hero = $("#hero");
+  let idx;
+  try { idx = await getJSON("/data/briefs/index.json"); }
+  catch { hero.innerHTML = `<div class="top"><span class="eyebrow">Today's call</span></div><p class="notice" style="margin:12px 0 0">The brief ledger didn't load. Refresh, or check back after 8 AM ET.</p>`; $("#recTile").hidden = true; return; }
+  const days = (idx.days || []).slice().sort((a, b) => a.date.localeCompare(b.date));
+  if (!days.length) { hero.innerHTML = `<div class="top"><span class="eyebrow">Today's call</span></div><p class="notice" style="margin:12px 0 0">The first call posts before the next open.</p>`; $("#recTile").hidden = true; return; }
+  let d = days[days.length - 1];
+  const graded = isGraded(d);
+  let file = null;
+  try { file = await getJSON(`/data/briefs/${d.date}.json`); d = Object.assign({}, d, file); } catch {}
+  const today = etToday();
+  hero.className = boardCls(d);
+  const status = graded
+    ? `<span class="live"><i></i>${esc(dowDate(d.date))}${file && file.graded_at ? " · graded " + esc(etTime(file.graded_at)) : ""}</span>`
+    : `<span class="live pending"><i></i>Live · graded after 4 PM ET</span>`;
+  const q = ["SPY close vs its 9:30 open."];
+  if (d.verdict || d.day_type) q.push([d.verdict ? `Verdict ${esc(d.verdict)}` : "", d.day_type ? `${esc(d.day_type)} day type` : ""].filter(Boolean).join(", ") + ".");
+  let badge = `<span class="chip badge">Not graded yet</span>`, after = "";
+  const move = isNum(d.open) && isNum(d.close) ? d.close - d.open : null;
+  const oc = move == null ? "" : `${num(d.open)} → ${num(d.close)}`;
+  if (d.correct === true) {
+    badge = `<span class="arcade badge"><span>HIT</span><b>✓ ${move == null ? "" : (move < 0 ? MINUS : "+") + "$" + Math.abs(move).toFixed(2)}</b></span>`;
+    after = oc + (move == null ? "" : ` · ${Math.abs(move) < 0.25 ? "a coin flip that landed" : "called it"}`);
+  } else if (d.correct === false) {
+    badge = `<span class="chip r badge">✗ MISS ${move == null ? "" : pct((move / d.open) * 100)}</span>`;
+    after = oc + (oc ? " · the other side won" : "");
+  } else if (d.result === "FLAT") {
+    badge = `<span class="chip n badge">FLAT</span>`; after = oc;
+  } else if (d.result) {
+    badge = `<span class="chip n badge">${esc(d.result)}</span>`; after = d.call ? "" : "No brief was posted this day.";
+  }
+  hero.innerHTML = `<div class="top"><span class="eyebrow">${d.date === today ? "Today's call" : "Last call"}</span>${status}</div>
+    ${bigCall(d)}
+    <p class="q">${q.join(" ")}</p>
+    <div class="result-row">${badge}${after ? `<span class="small muted">${esc(after)}</span>` : ""}</div>
+    <div class="range" id="homeRange"></div>`;
+  rangeBar($("#homeRange"), d);
+
+  const R = record(days), G = gapRecord(days);
+  $("#recTile").innerHTML = `<span class="go">Brief ›</span><div class="ringwrap">${ring(R.w, R.l)}<div>
+    <div class="k">Brief record</div><div class="v">${R.w}–${R.l}</div>
+    <div class="s">${R.hit == null ? "—" : Math.round(R.hit) + "%"} hit · Brier ${R.brier == null ? "—" : R.brier.toFixed(3)}<br>Gap direction <b class="${G.w >= G.l ? "green" : "red"}">${G.w}–${G.l} ${G.w >= G.l ? "✓" : "✗"}</b></div></div></div>`;
+})();
+
 (async () => {
-  const sb = supabase.createClient(SITE.supabaseUrl, SITE.supabaseAnonKey);
-  const { data } = await sb.from("journal_public").select("return_pct,wins,losses").order("date");
-  if (!data || !data.length) return;
-  let g = 1; data.forEach((r) => (g *= 1 + (Number(r.return_pct) || 0) / 100));
-  const W = data.reduce((a, r) => a + r.wins, 0), L = data.reduce((a, r) => a + r.losses, 0);
-  $("#jLine").textContent = `${pct((g - 1) * 100, 1)} since start · trades ${W}–${L}.`;
-})().catch(() => {});
+  // ── This week card ────────────────────────────────────────────────────
+  try {
+    const wi = await getJSON("/data/weeks/index.json");
+    const x = (wi.weeks || []).slice().sort((a, b) => b.start.localeCompare(a.start))[0];
+    if (!x) return;
+    const thisWeek = x.end >= mondayOf(etToday());
+    const hasTrades = !!x.trades;
+    const right = hasTrades
+      ? `<span class="arcade lg score" role="img" aria-label="Week score ${esc(x.trades)} trades${isNum(x.week_return_pct) ? ", account " + esc(pct(x.week_return_pct, 1)) : ""}"><span>WEEK SCORE</span><b>${esc(x.trades)}</b>${isNum(x.week_return_pct) ? `<span>${esc(pct(x.week_return_pct, 1))}</span>` : ""}</span>`
+      : x.brief ? `<div class="plainstat"><div class="k">Brief</div><div class="v">${esc(x.brief)}</div></div>` : "";
+    const w = $("#weekWrap");
+    w.className = `card ${hasTrades ? "arcade-frame " : ""}mt3`;
+    w.innerHTML = `<div class="weekcard"><div class="txt">
+      <div class="eyebrow">${thisWeek ? "This week" : "Last week"} · ${esc(spanDate(x.start, x.end))}</div>
+      <p class="quote">${esc(x.headline || "")}</p>
+      <a href="/weekly.html?w=${encodeURIComponent(x.id)}" class="small blue" style="text-decoration:none">Read the weekly review</a></div>${right}</div>`;
+    w.hidden = false;
+  } catch {}
+})();
+
+(async () => {
+  // ── Journal tile (percent only, never dollars) ────────────────────────
+  const tile = $("#jTile");
+  const fail = () => { tile.innerHTML = `<span class="go">Journal ›</span><div class="k">Account since start</div><div class="v">—</div><div class="s">Journal loads from the live ledger.</div>`; };
+  let J;
+  try { J = await journalPublic(); } catch { return fail(); }
+  const rows = J.rows.filter((r) => isNum(r.return_pct));
+  if (!rows.length) return fail();
+  let g = 1; const cum = [0];
+  rows.forEach((r) => { g *= 1 + Number(r.return_pct) / 100; cum.push((g - 1) * 100); });
+  const tot = cum[cum.length - 1], n = rows.length, rate = J.daily_rate;
+  const path = cum.map((_, i) => (Math.pow(1 + rate, i) - 1) * 100);
+  const lastWk = mondayOf(rows[n - 1].date), wk = rows.filter((r) => r.date >= lastWk);
+  const tW = wk.reduce((a, r) => a + (Number(r.wins) || 0), 0), tL = wk.reduce((a, r) => a + (Number(r.losses) || 0), 0);
+  const inThisWeek = lastWk === mondayOf(etToday());
+  const rateTxt = `${+(rate * 100).toFixed(2)}%/day`;
+  tile.innerHTML = `<span class="go">Journal ›</span><div class="k">Account since start</div>
+    <div class="v ${tot >= 0 ? "green" : "red"}">${tot < 0 ? "▼ " : ""}${pct(tot, 1)}</div>
+    <div class="s">${rateTxt} path: <span class="gold">${pct(path[path.length - 1], 1)}</span>${tW + tL ? ` · trades ${tW}–${tL} ${inThisWeek ? "this week" : "last week"}` : ""}</div>
+    <div class="chart" id="spark" style="margin-top:8px"></div>`;
+  const labels = ["Start" + (J.start_date ? " · " + shortDate(J.start_date) : ""), ...rows.map((r) => shortDate(r.date))];
+  mount($("#spark"), (el, W) => {
+    const H = 56, lo = Math.min(0, ...cum, ...path), hi = Math.max(...cum, ...path, 1);
+    const x = (i) => (cum.length === 1 ? W / 2 : (i / (cum.length - 1)) * (W - 6)), y = (v) => H - 4 - ((v - lo) / (hi - lo)) * (H - 8);
+    const pts = cum.map((v, i) => x(i) + "," + y(v)).join(" ");
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Account since start ${pct(tot, 1)}, versus the ${rateTxt} path ${pct(path[path.length - 1], 1)}">
+      <line x1="0" x2="${W}" y1="${y(0)}" y2="${y(0)}" stroke="#2c3948"/>
+      <polyline points="${path.map((v, i) => x(i) + "," + y(v)).join(" ")}" fill="none" stroke="var(--gold)" stroke-width="1.5" stroke-dasharray="4 3" opacity=".8"/>
+      <polygon points="${x(0)},${y(0)} ${pts} ${x(cum.length - 1)},${y(0)}" fill="rgba(84,211,155,.12)"/>
+      <polyline points="${pts}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round"/>
+      <line class="xh" x1="0" x2="0" y1="0" y2="${H}" stroke="var(--muted)" opacity="0"/>
+      <circle cx="${x(cum.length - 1)}" cy="${y(tot)}" r="4" fill="var(--green)" stroke="var(--panel)" stroke-width="2"/></svg>`;
+    hover(el, W, H, 0, H, cum.map((v, i) => ({ x: x(i), y: y(v), html: `<div class="muted">${esc(labels[i])}</div><b>${esc(pct(v, 1))}</b>` })));
+  });
+})();
 </script>
 </body>
 </html>

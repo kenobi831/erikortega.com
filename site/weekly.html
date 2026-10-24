@@ -5,37 +5,43 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Weekly Review · Erik Ortega</title>
 <meta name="description" content="Weekly review of the SPY pre-market brief and the trading journal: what worked, what didn't, what changes.">
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/assets/app.js"></script>
 </head>
 <body>
+<nav class="sitebar" aria-label="Site"><a class="brand" href="/">erik<b>ortega</b>.com</a>
+<a href="/">Home</a><a href="/brief.html">Brief</a><a href="/weekly.html" class="on" aria-current="page">Weekly</a><a href="/journal.html">Journal</a><a href="/diary.html">Diary</a></nav>
 <main class="wrap">
-  <h1>Weekly Review</h1>
-  <p class="lede">Every Friday after the close: how the brief did, how the trades did, and what changes next week.</p>
-  <section id="week"></section>
-  <h2>All weeks</h2>
-  <div class="card scroll"><table class="tbl" id="weeks"></table></div>
-  <footer>Journal figures are percentages only. <a href="/brief.html">Daily briefs →</a></footer>
+  <div class="eyebrow">Weekly review</div>
+  <h1 class="title" id="title">This week</h1>
+  <p class="sub">Published Friday after the close. How the brief did, how the trades did, what changes next week.</p>
+  <div id="app" aria-live="polite"><p class="small muted mt4">Loading the review…</p></div>
+  <footer>Journal figures are percentages only. Not financial advice.</footer>
 </main>
 <script>
-renderNav("Weekly");
 (async () => {
-  const idx = await getJSON("/data/weeks/index.json");
-  const weeks = idx.weeks.sort((a, b) => b.start.localeCompare(a.start));
-  if (!weeks.length) { $("#week").innerHTML = `<p class="notice">The first weekly review posts on Friday.</p>`; return; }
+  const app = $("#app");
+  let idx;
+  try { idx = await getJSON("/data/weeks/index.json"); }
+  catch { app.innerHTML = `<div class="board nocall mt4"><p class="notice" style="margin:0">The weekly reviews didn't load. Refresh in a moment.</p></div>`; return; }
+  const weeks = (idx.weeks || []).filter((x) => x && x.id && x.start).sort((a, b) => b.start.localeCompare(a.start));
+  if (!weeks.length) {
+    app.innerHTML = `<div class="board nocall mt4"><p class="quote" style="margin:0 0 10px">The first weekly review posts Friday after the close.</p><a class="small blue" href="/brief.html" style="text-decoration:none">Read today's brief</a></div>`;
+    return;
+  }
   const want = new URLSearchParams(location.search).get("w");
-  const sel = weeks.find((w) => w.id === want) || weeks[0];
-  const w = await getJSON(`/data/weeks/${sel.id}.json`);
+  const sel = weeks.find((x) => x.id === want) || weeks[0];
+  const [wf, bidx] = await Promise.all([getJSON(`/data/weeks/${encodeURIComponent(sel.id)}.json`).catch(() => null), getJSON("/data/briefs/index.json").catch(() => null)]);
+  const w = Object.assign({}, sel, wf || {});
   const br = w.brief_record || {};
   let j = w.journal || {};
   // Journal percentages come live from Supabase when the weekly file doesn't carry them.
   if (!j.daily && window.supabase) {
     try {
       const sb = supabase.createClient(SITE.supabaseUrl, SITE.supabaseAnonKey);
-      const { data: all } = await sb.from("journal_public").select("*").order("date");
+      const { data: all } = await timeout(sb.from("journal_public").select("*").order("date"));
       if (all && all.length) {
         let g = 1, gw = 1;
         const rate = 0.05;
@@ -50,42 +56,146 @@ renderNav("Weekly");
           target_since_start_pct: (Math.pow(1 + rate, upto.length) - 1) * 100,
           daily: wk.map((r) => ({ date: r.date, return_pct: Number(r.return_pct), side: r.sides, trade_return_pct: r.trade_return_pct, followed_brief: r.followed_brief })),
         };
+        if (!wk.length) j = {};
       }
     } catch {}
   }
-  const list = (arr) => (arr && arr.length ? `<ul class="clean">${arr.map((x) => `<li>${esc(x)}</li>`).join("")}</ul>` : `<p class="muted">nothing</p>`);
+  const daily = Array.isArray(j.daily) ? j.daily.filter((r) => r && r.date) : [];
+  const hasJ = !!(j.trades && (daily.length || (j.trades.w ?? 0) + (j.trades.l ?? 0) > 0));
+  const year = dateParts(w.end || w.start).y;
+  $("#title").textContent = `${spanDate(w.start, w.end || w.start)}, ${year}`;
+  document.title = `Weekly Review · ${spanDate(w.start, w.end || w.start)}, ${year} · Erik Ortega`;
+  let h = "";
 
-  let h = `<h2>${esc(shortDate(w.start))} – ${esc(shortDate(w.end))}, ${dateParts(w.end).y}</h2>
-  <div class="card"><p style="font-size:17px;margin:0">${esc(w.headline || "")}</p></div>
-  <div class="tiles" style="margin-top:12px">
-    <div class="tile"><div class="k">Brief this week</div><div class="v">${br.week ? `${br.week.w}–${br.week.l}` : "—"}</div><div class="s">close vs open</div></div>
-    <div class="tile"><div class="k">Brief first hour</div><div class="v">${br.first_hour ? `${br.first_hour.w}–${br.first_hour.l}` : "—"}</div><div class="s">9:30–10:30 ET</div></div>
-    <div class="tile"><div class="k">Brief all-time</div><div class="v">${br.all_time ? `${br.all_time.w}–${br.all_time.l}` : "—"}</div><div class="s">${br.all_time ? `hit ${num(br.all_time.hit_pct, 0)}% · Brier ${num(br.all_time.brier, 3)}` : ""}</div></div>
-    <div class="tile"><div class="k">Trades</div><div class="v">${j.trades ? `${j.trades.w}–${j.trades.l}` : "—"}</div><div class="s">${j.week_return_pct != null ? "account " + pct(j.week_return_pct, 1) : ""}</div></div>
-  </div>`;
-  if (j.daily && j.daily.length) {
-    h += `<div class="card" style="margin-top:12px"><h3>Account return by day</h3><div id="wkChart"></div>
-      <div class="scroll"><table class="tbl" style="margin-top:8px"><thead><tr><th>Day</th><th>Side</th><th class="num">Trade</th><th class="num">Account</th><th>With brief?</th></tr></thead><tbody>${
-      j.daily.map((d) => `<tr><td>${esc(dateParts(d.date).dow)} ${esc(shortDate(d.date))}</td><td>${esc(d.side || "—")}</td><td class="num">${pct(d.trade_return_pct, 1)}</td><td class="num">${pct(d.return_pct)}</td><td>${d.followed_brief == null ? "—" : d.followed_brief ? "yes" : "no"}</td></tr>`).join("")
-    }</tbody></table></div>${j.since_start_pct != null ? `<p class="muted mono" style="font-size:12px;margin:8px 0 0">Since start ${pct(j.since_start_pct, 1)} · 5%/day target ${pct(j.target_since_start_pct, 1)}</p>` : ""}</div>`;
+  // 2. Week picker
+  const wn = (id) => (String(id).match(/W\d+/) || [id])[0];
+  h += `<nav class="weekpick" aria-label="Weeks">${weeks.map((x) => `<a class="chip${x.id === sel.id ? "" : " n"}" href="?w=${encodeURIComponent(x.id)}"${x.id === sel.id ? ' aria-current="page"' : ""}>${esc(wn(x.id))} · ${esc(shortDate(x.start))}</a>`).join("")}</nav>`;
+
+  // 3. Hero
+  const bw = br.week ? br.week : null;
+  const tradesCell = hasJ
+    ? `<div class="scorebox"><div class="k">Trades</div><span class="arcade lg" role="img" aria-label="Week score ${j.trades.w}–${j.trades.l}"><span>WEEK SCORE</span><b>${j.trades.w}–${j.trades.l}</b></span>${isNum(j.week_return_pct) ? `<div class="s">account <b class="${j.week_return_pct >= 0 ? "green" : "red"}">${j.week_return_pct < 0 ? "▼ " : ""}${pct(j.week_return_pct, 1)}</b></div>` : ""}</div>`
+    : `<div class="scorebox"><div class="k">Trades</div><div class="plain muted">—</div><div class="s">No trades logged</div></div>`;
+  const briefCell = `<div class="scorebox"><div class="k">Brief</div><div class="plain ${bw ? (bw.w >= bw.l ? "green" : "red") : "muted"}">${bw ? wl(bw) : "—"}</div>
+    <div class="s">${br.first_hour ? `first hour ${wl(br.first_hour)}` : ""}${br.first_hour && br.all_time ? "<br>" : ""}${br.all_time ? `all-time ${wl(br.all_time)}` : ""}</div></div>`;
+  h += `<section class="card ${hasJ ? "arcade-frame " : ""}whero" aria-label="Week summary"><p class="quote">${esc(w.headline || "")}</p><div class="scores">${tradesCell}${briefCell}</div></section>`;
+
+  // 4. Day by day
+  const bdays = Object.fromEntries(((bidx && bidx.days) || []).map((x) => [x.date, x]));
+  const jd = Object.fromEntries(daily.map((r) => [r.date, r]));
+  const dates = [];
+  for (let dt = w.start; dt <= (w.end || w.start) && dates.length < 7; dt = isoAdd(dt, 1)) { const wd = dateParts(dt).wd; if (wd && wd < 6) dates.push(dt); }
+  daily.forEach((r) => { if (!dates.includes(r.date)) dates.push(r.date); });
+  dates.sort();
+  const cols = dates.map((dt) => {
+    const bd = bdays[dt], r = jd[dt];
+    let bc = `<div class="bc muted">–</div><div class="sd">no brief</div>`;
+    if (bd) {
+      const mk = bd.correct === true ? `<span class="green">✓</span>` : bd.correct === false ? `<span class="red">✗</span>` : `<span class="muted">–</span>`;
+      bc = `<div class="bc"><span class="${bd.call === "GREEN" ? "green" : bd.call === "RED" ? "red" : "muted"}">${callGlyph(bd.call)}</span> ${mk}</div><div class="sd">brief</div>`;
+    }
+    let tr = `<div class="tr muted" style="font-size:12px;font-weight:600">no trade</div>`;
+    if (r) {
+      const t = isNum(r.trade_return_pct) ? Math.round(Number(r.trade_return_pct)) : null;
+      tr = `<div class="tr ${t == null ? "muted" : t > 0 ? "green" : t < 0 ? "red" : ""}">${t == null ? "–" : (t < 0 ? "▼ " + MINUS : t > 0 ? "+" : "") + Math.abs(t) + "%"}</div>
+        <div class="sd">${esc(r.side || "–")}</div>${r.followed_brief === true ? `<div class="fb with">WITH</div>` : r.followed_brief === false ? `<div class="fb against">AGAINST</div>` : ""}`;
+    }
+    return `<div class="dcol"><div class="dw">${esc(dateParts(dt).dow)}</div>${bc}${tr}</div>`;
+  }).join("");
+  h += `<div class="sec-h"><h2>Day by day</h2><span class="aside">brief call vs the trade</span></div>
+    <div class="card"><div class="days5" style="grid-template-columns:repeat(${Math.max(5, dates.length)},minmax(0,1fr))">${cols}</div>
+    ${daily.some((r) => isNum(r.return_pct)) ? `<div class="chart" id="wkBars" style="margin-top:14px"></div><div class="small muted">Account return by day</div>` : ""}
+    ${daily.some((r) => r.followed_brief != null) ? `<div class="legend"><span><span class="fb with">WITH</span> trade followed the brief</span><span><span class="fb against">AGAINST</span> traded the other side</span></div>` : ""}</div>`;
+
+  // 5 + 6. Compound path, with vs against
+  const two = [];
+  if (isNum(j.since_start_pct) && isNum(j.target_since_start_pct)) {
+    const s = Number(j.since_start_pct), t = Number(j.target_since_start_pct);
+    const ratio = t > 0 ? s / t : 0, fill = Math.max(0, Math.min(1, ratio)) * 100;
+    two.push(`<div class="card"><h3>Compound path</h3>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap"><span class="${s >= 0 ? "green" : "red"}" style="font-size:26px;font-weight:780;letter-spacing:-.03em">${s < 0 ? "▼ " : ""}${pct(s, 1)}</span><span class="small muted">target <b class="gold">${pct(t, 1)}</b></span></div>
+      <div class="progress" role="img" aria-label="${pct(s, 1)} of a ${pct(t, 1)} target, ${Math.round(Math.max(0, ratio) * 100)}% of the way"><div class="f" style="width:${fill.toFixed(1)}%"></div><div class="t"></div></div>
+      <p class="small muted" style="margin:0">${ratio > 1 ? "Ahead of the path." : `${Math.max(0, Math.round(ratio * 100))}% of the way to the ${t > 0 ? "5%/day" : ""} path.`}</p></div>`);
   }
-  h += `<h2>What we learned</h2><div class="card">${list(w.learned)}</div>
-    <h2>Changes to the brief</h2><div class="card">${list(w.improve)}${w.rule_changes && w.rule_changes.length ? `<p class="muted" style="margin:10px 0 4px;font-size:13px">Rule changes</p>${list(w.rule_changes)}` : ""}</div>
-    <h2>Trading notes</h2><div class="card">${list(w.trading_notes)}</div>`;
-  $("#week").innerHTML = h;
-  if (j.daily && j.daily.length) {
-    barChart($("#wkChart"), {
-      title: "Account return by day",
-      labels: j.daily.map((d) => dateParts(d.date).dow),
-      values: j.daily.map((d) => d.return_pct),
-      tips: j.daily.map((d) => `${esc(shortDate(d.date))} <b>${pct(d.return_pct)}</b><br><span class="muted">${esc(d.side || "")} ${pct(d.trade_return_pct, 1)}</span>`),
-      yFmt: (v) => v.toFixed(0) + "%",
+  const traded = daily.filter((r) => isNum(r.trade_return_pct));
+  const grp = (f) => { const a = traded.filter((r) => r.followed_brief === f); return { w: a.filter((r) => Number(r.trade_return_pct) > 0).length, l: a.filter((r) => Number(r.trade_return_pct) <= 0).length }; };
+  const W1 = grp(true), W2 = grp(false);
+  if (traded.length) {
+    const rowH = (lab, o) => (o.w + o.l ? compareRow(lab, "", o.w, o.l).replace(/<small>\d+%<\/small>|<small>—<\/small>/, "") : "");
+    const rowsH = rowH("With brief", W1) + rowH("Against", W2);
+    two.push(`<div class="card"><h3>Trades with vs against the brief</h3>${rowsH ? `<div class="compare">${rowsH}</div>` : `<p class="small muted" style="margin:0">No trades tagged with or against the brief.</p>`}<p class="small muted" style="margin:6px 0 0">This week.</p></div>`);
+  }
+  if (two.length) h += `<div class="${two.length === 2 ? "split" : "grid"} mt3">${two.join("")}</div>`;
+
+  // 7. What we learned
+  const learned = (Array.isArray(w.learned) ? w.learned : []).filter(Boolean);
+  if (learned.length) {
+    const ICONS = [[/\b(right|reliable|worked)\b/i, "✓", "g"], [/\b(no edge|wrong|miss\w*|worse)\b/i, "✗", "r"], [/\b(stale|late|recheck)\b/i, "⏱", "y"], [/weight/i, "⚖", "y"]];
+    const icon = (s) => {
+      // the keyword that appears first in the sentence wins
+      let best = null;
+      ICONS.forEach(([re, ic, c]) => { const m = re.exec(s); if (m && (!best || m.index < best.i)) best = { i: m.index, ic, c }; });
+      return best || { ic: "•", c: "b" };
+    };
+    h += `<div class="sec-h"><h2>What we learned</h2><span class="aside">${learned.length} note${learned.length === 1 ? "" : "s"}</span></div>
+      <div class="lcards">${learned.map((s) => { const k = icon(String(s)); return `<div class="card lcard"><div class="ic ${k.c}" aria-hidden="true">${k.ic}</div><p>${esc(s)}</p></div>`; }).join("")}</div>`;
+  }
+
+  // 8 + 9. Changes to the brief, trading notes
+  const improve = (Array.isArray(w.improve) ? w.improve : []).filter(Boolean);
+  const changes = (Array.isArray(w.rule_changes) ? w.rule_changes : []).filter(Boolean);
+  const notes = (Array.isArray(w.trading_notes) ? w.trading_notes : []).filter(Boolean);
+  const chip = (s) => {
+    s = String(s);
+    if (/^R\d+\b.*\badopted\b/i.test(s)) return `<span class="chip g wrap">+ ${esc(s)}</span>`;
+    if (/\b(dropped|retired)\b/i.test(s)) return `<span class="chip r wrap">${MINUS} ${esc(s)}</span>`;
+    return `<span class="chip wrap">${esc(s)}</span>`;
+  };
+  const blocks = [];
+  if (improve.length || changes.length) blocks.push(`<div><div class="sec-h"><h2>Changes to the brief</h2></div><div class="card">
+    ${improve.length ? `<ul class="checklist">${improve.map((s) => `<li>${esc(s)}</li>`).join("")}</ul>` : ""}
+    ${changes.length ? `<div class="chips"${improve.length ? "" : ' style="border:0;margin:0;padding:0"'}>${changes.map(chip).join("")}</div>` : ""}</div></div>`);
+  if (notes.length) blocks.push(`<div><div class="sec-h"><h2>Trading notes</h2></div><div class="card"><ul class="checklist plain">${notes.map((s) => `<li>${esc(s)}</li>`).join("")}</ul></div></div>`);
+  if (blocks.length) h += `<div class="${blocks.length === 2 ? "split" : ""}">${blocks.join("")}</div>`;
+
+  // 10. All weeks
+  h += `<div class="sec-h"><h2>All weeks</h2></div><div class="card weeks-list">${weeks.map((x) => {
+    const pre = [x.brief ? `Brief ${x.brief}` : "", x.trades ? `trades ${x.trades}` : ""].filter(Boolean).join(" · ");
+    const r = isNum(x.week_return_pct) ? Number(x.week_return_pct) : null;
+    return `<a href="?w=${encodeURIComponent(x.id)}"${x.id === sel.id ? ' aria-current="page"' : ""}><span class="chip${x.id === sel.id ? "" : " n"}">${esc(shortDate(x.start))}</span><span class="hl">${esc(pre ? pre + ". " : "")}${esc(x.headline || "")}</span><b class="${r == null ? "muted" : r >= 0 ? "green" : "red"}">${r == null ? "—" : (r < 0 ? "▼ " : "") + pct(r, 1)}</b></a>`;
+  }).join("")}</div>`;
+
+  app.innerHTML = h;
+
+  // Account-return bars
+  const bars = $("#wkBars");
+  if (bars) {
+    const rs = daily.filter((r) => isNum(r.return_pct)).map((r) => ({ lab: dateParts(r.date).dow, date: r.date, v: Number(r.return_pct), side: r.side, t: r.trade_return_pct }));
+    mount(bars, (el, W) => {
+      const mx = Math.max(0, ...rs.map((r) => r.v)), mn = Math.min(0, ...rs.map((r) => r.v));
+      let hi = Math.max(10, Math.ceil(mx / 5) * 5), lo = mn < 0 ? Math.floor(mn / 5) * 5 : 0;
+      let ticks = [];
+      if (hi - lo <= 20) for (let t = lo; t <= hi; t += 5) ticks.push(t); else { const dm = niceDomain(lo, hi, 4); lo = dm.lo; hi = dm.hi; ticks = dm.ticks; }
+      const H = lo < 0 ? 160 : 130, P = { l: 34, r: 8, t: 16, b: lo < 0 ? 34 : 20 };
+      const n = rs.length, band = (W - P.l - P.r) / Math.max(n, 1), bw = Math.max(6, Math.min(44, band - 14));
+      const y = (v) => P.t + ((hi - v) * (H - P.t - P.b)) / (hi - lo), y0 = y(0);
+      let s = `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Account return by day: ${rs.map((r) => `${r.lab} ${pct(r.v)}`).join(", ")}">`;
+      ticks.forEach((t) => { s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y(t)}" y2="${y(t)}" stroke="#222e3b"/><text x="${P.l - 6}" y="${y(t) + 3}" text-anchor="end" class="axis">${t < 0 ? MINUS + Math.abs(t) : t}%</text>`; });
+      rs.forEach((r, i) => {
+        const cx = P.l + band * i + band / 2, yt = y(r.v), up = r.v >= 0, hgt = Math.abs(yt - y0), rr = Math.min(4, hgt / 2, bw / 2), L = cx - bw / 2, Rr = cx + bw / 2;
+        const path = up
+          ? `M${L},${y0} V${yt + rr} Q${L},${yt} ${L + rr},${yt} H${Rr - rr} Q${Rr},${yt} ${Rr},${yt + rr} V${y0} Z`
+          : `M${L},${y0} V${yt - rr} Q${L},${yt} ${L + rr},${yt} H${Rr - rr} Q${Rr},${yt} ${Rr},${yt - rr} V${y0} Z`;
+        s += `<path d="${path}" fill="${up ? "var(--green)" : "var(--red)"}"/>`;
+        if (n <= 7) s += `<text x="${cx}" y="${up ? yt - 4 : yt + 12}" text-anchor="middle" class="axis" style="fill:${up ? "var(--ink)" : "var(--red)"}">${up ? "" : "▼ "}${esc(pct(r.v))}</text>`;
+        s += `<text x="${cx}" y="${H - 5}" text-anchor="middle" class="axis">${esc(r.lab)}</text>`;
+      });
+      s += `<line x1="${P.l}" x2="${W - P.r}" y1="${y0}" y2="${y0}" stroke="#3a4a5d"/><line class="xh" x1="0" x2="0" stroke="var(--muted)" opacity="0"/></svg>`;
+      el.innerHTML = s;
+      hover(el, W, H, P.t, H - P.b, rs.map((r, i) => ({ x: P.l + band * i + band / 2, y: Math.min(y(r.v), y0), html: `<div class="muted">${esc(dowDate(r.date))}</div><b>${esc(pct(r.v))}</b> account${isNum(r.t) ? `<div class="muted">${esc(r.side || "")} trade ${esc(pct(r.t, 1))}</div>` : ""}` })));
     });
   }
-  $("#weeks").innerHTML = `<thead><tr><th>Week</th><th>Brief</th><th>Trades</th><th class="num">Account</th><th>Headline</th></tr></thead><tbody>${
-    weeks.map((x) => `<tr class="click" onclick="location.search='?w=${esc(x.id)}'"><td class="mono">${esc(shortDate(x.start))}</td><td class="mono">${esc(x.brief || "—")}</td><td class="mono">${esc(x.trades || "—")}</td><td class="num">${pct(x.week_return_pct, 1)}</td><td>${esc(x.headline || "")}</td></tr>`).join("")
-  }</tbody>`;
-})().catch((e) => { $("#week").innerHTML = `<p class="notice">Couldn't load the weekly review (${esc(e.message)}).</p>`; });
+})().catch((e) => { $("#app").innerHTML = `<div class="board nocall mt4"><p class="notice" style="margin:0">The weekly review didn't load. Refresh in a moment.</p></div>`; console.warn(e); });
 </script>
 </body>
 </html>
