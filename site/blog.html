@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Diary · Erik Ortega</title>
-<meta name="description" content="Erik Ortega's family diary: memoirs, mornings, and the story behind all of it.">
+<title>Blog · Erik Ortega</title>
+<meta name="description" content="Erik Ortega's blog: memoirs, mornings, and the story behind all of it.">
 <meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="stylesheet" href="/assets/portfolio.css">
@@ -25,9 +25,9 @@
 </style>
 </head>
 <body>
-<a class="skip" href="#main-content">Skip to content</a><header class="portfolio-header"><a class="wordmark" href="/" aria-label="Erik Ortega home">ERIK<br>ORTEGA<span>®</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu <span>+</span></button><nav id="main-nav" aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">Projects</a><a href="/brief.html">Trading Journal</a><a href="/diary.html" aria-current="page">Diary</a><a href="/#about">About</a><a class="hello" href="mailto:erik@erikortega.com">Say hello ↗</a></nav></header>
+<a class="skip" href="#main-content">Skip to content</a><header class="portfolio-header"><a class="wordmark" href="/" aria-label="Erik Ortega home">ERIK<br>ORTEGA<span>®</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu <span>+</span></button><nav id="main-nav" aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">Projects</a><a href="/brief.html">Trading Journal</a><a href="/blog.html" aria-current="page">Blog</a><a href="/#about">About</a><a class="hello" href="mailto:erik@erikortega.com">Say hello ↗</a></nav></header>
 <main id="main-content" class="wrap diary">
-  <div class="eyebrow">Diary</div>
+  <div class="eyebrow">Blog</div>
   <h1 class="title">Family memoirs</h1>
   <p class="sub">Memoirs, family pictures, and the story behind all of it.</p>
   <div id="entries" aria-live="polite"><p class="small muted mt4">Loading…</p></div>
@@ -38,7 +38,7 @@
   const box = $("#entries");
   let data;
   try { data = await getJSON("/data/diary/index.json"); }
-  catch { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">The diary didn't load. Refresh in a moment.</p></div>`; return; }
+  catch { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">The blog didn't load. Refresh in a moment.</p></div>`; return; }
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const fecha = (iso, lang) => {

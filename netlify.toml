@@ -5,3 +5,13 @@
   for = "/data/*"
   [headers.values]
     Cache-Control = "public, max-age=300"
+
+[[redirects]]
+  from = "/diary.html"
+  to = "/blog.html"
+  status = 301
+
+[[redirects]]
+  from = "/diary"
+  to = "/blog.html"
+  status = 301
