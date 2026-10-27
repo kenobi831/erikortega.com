@@ -4,23 +4,55 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diary · Erik Ortega</title>
-<meta name="description" content="Erik Ortega's family diary: memoirs and pictures. Coming soon.">
+<meta name="description" content="Erik Ortega's family diary: memoirs, mornings, and the story behind all of it.">
 <meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="stylesheet" href="/assets/portfolio.css">
+<script src="/assets/app.js"></script>
 <script src="/assets/navigation.js" defer></script>
+<style>
+  .diary { max-width: 680px; }
+  .entry { margin-top: 28px; padding: 26px 24px; }
+  .entry .meta { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; margin: 0 0 8px; }
+  .entry h2 { font-size: 24px; font-weight: 760; letter-spacing: -.03em; line-height: 1.2; margin: 0 0 18px; }
+  .entry p { font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.7; color: #d4dde5; margin: 0 0 16px; }
+  .entry p:last-child { margin-bottom: 0; }
+  .entry .permalink { color: inherit; text-decoration: none; }
+  .entry .permalink:hover { text-decoration: underline; }
+  @media (max-width: 520px) { .entry { padding: 20px 16px; } .entry p { font-size: 17px; } }
+</style>
 </head>
 <body>
 <a class="skip" href="#main-content">Skip to content</a><header class="portfolio-header"><a class="wordmark" href="/" aria-label="Erik Ortega home">ERIK<br>ORTEGA<span>®</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu <span>+</span></button><nav id="main-nav" aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">Projects</a><a href="/brief.html">Trading Journal</a><a href="/#about">About</a><a class="hello" href="mailto:erik@erikortega.com">Say hello ↗</a></nav></header>
-<main id="main-content" class="wrap">
+<main id="main-content" class="wrap diary">
   <div class="eyebrow">Diary</div>
   <h1 class="title">Family memoirs</h1>
   <p class="sub">Memoirs, family pictures, and the story behind all of it.</p>
-  <div class="card mt4" style="display:flex;gap:14px;align-items:center;margin-top:24px">
-    <div class="ic m" aria-hidden="true" style="width:34px;height:34px;border-radius:10px;display:grid;place-items:center;flex:none">♥</div>
-    <p class="prose"><b class="ink">Coming soon.</b> In the meantime, the <a class="blue" href="/brief.html">daily brief</a> and the <a class="blue" href="/journal.html">compound journal</a> are live.</p>
-  </div>
+  <div id="entries" aria-live="polite"><p class="small muted mt4">Loading…</p></div>
   <footer>© Erik Ortega · Salinas, CA</footer>
 </main>
+<script>
+(async () => {
+  const box = $("#entries");
+  let data;
+  try { data = await getJSON("/data/diary/index.json"); }
+  catch { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">The diary didn't load. Refresh in a moment.</p></div>`; return; }
+  const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
+  const fecha = (iso, lang) => {
+    const p = dateParts(iso);
+    return lang === "es" ? `${DIAS[p.wd]} ${p.d} de ${MESES[p.m - 1]}, ${p.y}` : longDate(iso);
+  };
+  const entries = (data.entries || []).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+  if (!entries.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">First entry coming soon.</p></div>`; return; }
+  box.innerHTML = entries.map((e) => `
+    <article class="card entry" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
+      <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, e.lang))}${e.moment ? " · " + esc(e.moment) : ""}</a></p>
+      ${e.title ? `<h2>${esc(e.title)}</h2>` : ""}
+      ${(e.paragraphs || []).map((t) => `<p>${esc(t)}</p>`).join("")}
+    </article>`).join("");
+  if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
+})();
+</script>
 </body>
 </html>
