@@ -35,8 +35,8 @@
   <div class="blog-head">
     <div class="eyebrow">Blog</div>
     <div class="langtoggle" role="group" aria-label="Language / Idioma">
-      <button type="button" data-lang="es" aria-pressed="false">ES</button>
       <button type="button" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false">ES</button>
     </div>
   </div>
   <h1 class="title" data-i18n="title">Family memoirs</h1>
@@ -57,7 +57,7 @@
 
   const param = new URLSearchParams(location.search).get("lang");
   let saved = null; try { saved = localStorage.getItem("blog-lang"); } catch {}
-  let L = ["es", "en"].includes(param) ? param : ["es", "en"].includes(saved) ? saved : (navigator.language || "").toLowerCase().startsWith("es") ? "es" : "en";
+  let L = ["es", "en"].includes(param) ? param : ["es", "en"].includes(saved) ? saved : "en";
 
   let data = null, failed = false;
   try { data = await getJSON("/data/diary/index.json"); } catch { failed = true; }
