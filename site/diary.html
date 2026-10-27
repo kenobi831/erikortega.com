@@ -17,6 +17,8 @@
   .entry h2 { font-size: 24px; font-weight: 760; letter-spacing: -.03em; line-height: 1.2; margin: 0 0 18px; }
   .entry p { font-family: Georgia, "Times New Roman", serif; font-size: 18px; line-height: 1.7; color: #d4dde5; margin: 0 0 16px; }
   .entry p:last-child { margin-bottom: 0; }
+  .entry .photo { margin: 0 0 22px; }
+  .entry .photo img { display: block; width: auto; max-width: 100%; max-height: 720px; margin: 0 auto; border-radius: 12px; border: 1px solid var(--line); }
   .entry .permalink { color: inherit; text-decoration: none; }
   .entry .permalink:hover { text-decoration: underline; }
   @media (max-width: 520px) { .entry { padding: 20px 16px; } .entry p { font-size: 17px; } }
@@ -49,6 +51,7 @@
     <article class="card entry" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
       <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, e.lang))}${e.moment ? " · " + esc(e.moment) : ""}</a></p>
       ${e.title ? `<h2>${esc(e.title)}</h2>` : ""}
+      ${e.photo && e.photo.src ? `<figure class="photo"><img src="${esc(e.photo.src)}" alt="${esc(e.photo.alt || "")}" loading="lazy"></figure>` : ""}
       ${(e.paragraphs || []).map((t) => `<p>${esc(t)}</p>`).join("")}
     </article>`).join("");
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
