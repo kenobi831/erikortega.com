@@ -4,15 +4,26 @@
     {
       "id": "2026-10-26-manana",
       "date": "2026-10-26",
-      "moment": "Mañana",
       "lang": "es",
+      "photo": { "src": "/assets/diary/2026-10-26-manana.jpg" },
+      "moment": "Mañana",
       "title": "Un lunes cualquiera de octubre",
-      "photo": { "src": "/assets/diary/2026-10-26-manana.jpg", "alt": "Erik, Santi y Sky acostados en la tierra, abrazados y sonriendo al sol" },
+      "alt": "Erik, Santi y Sky acostados en la tierra, abrazados y sonriendo al sol",
       "paragraphs": [
         "Un lunes cualquiera de octubre. Salgo temprano a trabajar, todavía no hay luz. Al echarme de reversa con el carro, sin pensarlo, busco pelotas en el pasto, como antes, cuando siempre me encontraba las de Santi en la yarda.",
         "Y de repente me pega la nostalgia. Mi hijo ya no juega con pelotas. Tiene 15 años, va para 16, y ya es más grande que yo. Ya no lo voy a volver a levantar en mis brazos ni a cargar en mis hombros. Y eso me duele.",
         "Pero creo que ese dolor también es una forma de amor. Duele porque esos años valieron la pena. Ya no lo cargo en mis hombros, pero ahora me toca otra cosa: verlo caminar solo, y estar ahí cuando voltee a buscarme. Las pelotas ya no están en el pasto, pero lo que sembré en esos años sigue creciendo."
-      ]
+      ],
+      "en": {
+        "moment": "Morning",
+        "title": "Just another Monday in October",
+        "alt": "Erik, Santi and Sky lying in the dirt, hugging and smiling in the sun",
+        "paragraphs": [
+          "Just another Monday in October. I head out early for work; it's still dark. As I back the car out, without thinking, I look for balls in the grass, like I used to, back when I'd always find Santi's in the yard.",
+          "And suddenly the nostalgia hits me. My son doesn't play with balls anymore. He's 15, about to turn 16, and he's already bigger than me. I'll never again lift him in my arms or carry him on my shoulders. And that hurts.",
+          "But I think that pain is also a form of love. It hurts because those years were worth it. I don't carry him on my shoulders anymore, but now I get something else: to watch him walk on his own, and to be there when he turns around looking for me. The balls aren't in the grass anymore, but what I planted in those years keeps growing."
+        ]
+      }
     }
   ]
 }

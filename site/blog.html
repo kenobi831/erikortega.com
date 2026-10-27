@@ -19,6 +19,11 @@
   .entry p:last-child { margin-bottom: 0; }
   .entry .photo { margin: 0 0 22px; }
   .entry .photo img { display: block; width: auto; max-width: 100%; max-height: 720px; margin: 0 auto; border-radius: 12px; border: 1px solid var(--line); }
+  .blog-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .langtoggle { display: inline-flex; border: 1px solid var(--line-2); border-radius: 999px; padding: 3px; background: var(--well); }
+  .langtoggle button { appearance: none; border: 0; background: transparent; color: var(--muted); font: inherit; font-size: 12px; font-weight: 750; letter-spacing: .08em; padding: 6px 14px; border-radius: 999px; cursor: pointer; }
+  .langtoggle button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+  .langtoggle button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .entry .permalink { color: inherit; text-decoration: none; }
   .entry .permalink:hover { text-decoration: underline; }
   @media (max-width: 520px) { .entry { padding: 20px 16px; } .entry p { font-size: 17px; } }
@@ -27,33 +32,61 @@
 <body>
 <a class="skip" href="#main-content">Skip to content</a><header class="portfolio-header"><a class="wordmark" href="/" aria-label="Erik Ortega home">ERIK<br>ORTEGA<span>®</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="main-nav">Menu <span>+</span></button><nav id="main-nav" aria-label="Main navigation"><a href="/">Home</a><a href="/#projects">Projects</a><a href="/brief.html">Trading Journal</a><a href="/blog.html" aria-current="page">Blog</a><a href="/#about">About</a><a class="hello" href="mailto:erik@erikortega.com">Say hello ↗</a></nav></header>
 <main id="main-content" class="wrap diary">
-  <div class="eyebrow">Blog</div>
-  <h1 class="title">Family memoirs</h1>
-  <p class="sub">Memoirs, family pictures, and the story behind all of it.</p>
+  <div class="blog-head">
+    <div class="eyebrow">Blog</div>
+    <div class="langtoggle" role="group" aria-label="Language / Idioma">
+      <button type="button" data-lang="es" aria-pressed="false">ES</button>
+      <button type="button" data-lang="en" aria-pressed="false">EN</button>
+    </div>
+  </div>
+  <h1 class="title" data-i18n="title">Family memoirs</h1>
+  <p class="sub" data-i18n="sub">Memoirs, family pictures, and the story behind all of it.</p>
   <div id="entries" aria-live="polite"><p class="small muted mt4">Loading…</p></div>
   <footer>© Erik Ortega · Salinas, CA</footer>
 </main>
 <script>
 (async () => {
   const box = $("#entries");
-  let data;
-  try { data = await getJSON("/data/diary/index.json"); }
-  catch { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">The blog didn't load. Refresh in a moment.</p></div>`; return; }
+  const UI = {
+    es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento." },
+    en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment." },
+  };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
-  const fecha = (iso, lang) => {
-    const p = dateParts(iso);
-    return lang === "es" ? `${DIAS[p.wd]} ${p.d} de ${MESES[p.m - 1]}, ${p.y}` : longDate(iso);
-  };
-  const entries = (data.entries || []).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
-  if (!entries.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">First entry coming soon.</p></div>`; return; }
-  box.innerHTML = entries.map((e) => `
+  const fecha = (iso, L) => { const p = dateParts(iso); return L === "es" ? `${DIAS[p.wd]} ${p.d} de ${MESES[p.m - 1]}, ${p.y}` : longDate(iso); };
+
+  const param = new URLSearchParams(location.search).get("lang");
+  let saved = null; try { saved = localStorage.getItem("blog-lang"); } catch {}
+  let L = ["es", "en"].includes(param) ? param : ["es", "en"].includes(saved) ? saved : (navigator.language || "").toLowerCase().startsWith("es") ? "es" : "en";
+
+  let data = null, failed = false;
+  try { data = await getJSON("/data/diary/index.json"); } catch { failed = true; }
+  const entries = ((data && data.entries) || []).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+  // An entry's top-level fields are in its own language; e.en / e.es hold the translation.
+  const view = (e) => (L === (e.lang || "en") || !e[L] ? e : Object.assign({}, e, e[L], { lang: L }));
+
+  const render = () => {
+    document.documentElement.lang = L;
+    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = UI[L][el.dataset.i18n]));
+    document.querySelectorAll(".langtoggle button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === L)));
+    if (failed) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].error}</p></div>`; return; }
+    if (!entries.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].empty}</p></div>`; return; }
+    box.innerHTML = entries.map(view).map((e) => `
     <article class="card entry" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
-      <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, e.lang))}${e.moment ? " · " + esc(e.moment) : ""}</a></p>
+      <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, L))}${e.moment ? " · " + esc(e.moment) : ""}</a></p>
       ${e.title ? `<h2>${esc(e.title)}</h2>` : ""}
-      ${e.photo && e.photo.src ? `<figure class="photo"><img src="${esc(e.photo.src)}" alt="${esc(e.photo.alt || "")}" loading="lazy"></figure>` : ""}
+      ${e.photo && e.photo.src ? `<figure class="photo"><img src="${esc(e.photo.src)}" alt="${esc(e.alt || "")}" loading="lazy"></figure>` : ""}
       ${(e.paragraphs || []).map((t) => `<p>${esc(t)}</p>`).join("")}
     </article>`).join("");
+  };
+
+  document.querySelectorAll(".langtoggle button").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.lang === L) return;
+    L = b.dataset.lang;
+    try { localStorage.setItem("blog-lang", L); } catch {}
+    render();
+  }));
+  render();
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 })();
 </script>
