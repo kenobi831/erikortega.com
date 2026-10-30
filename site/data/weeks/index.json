@@ -1,12 +1,21 @@
 {
  "weeks": [
   {
+   "id": "2026-W44",
+   "start": "2026-10-26",
+   "end": "2026-10-30",
+   "headline": "The brief went 3–1 on the close but 1–3 on the first hour: it read the AI trade right, yet SPY kept dipping below the open before recovering. Friday is not graded yet.",
+   "brief": "3–1",
+   "trades": null,
+   "week_return_pct": null
+  },
+  {
    "id": "2026-W43",
    "start": "2026-10-19",
    "end": "2026-10-23",
-   "headline": "Brief 2\u20133 on the close, 1\u20134 on the first hour. The trades went 5\u20130 anyway \u2014 the edge is the open tape, not the brief's direction call.",
-   "brief": "2\u20133",
-   "trades": "5\u20130",
+   "headline": "Brief 2–3 on the close, 1–4 on the first hour. The trades went 5–0 anyway — the edge is the open tape, not the brief's direction call.",
+   "brief": "2–3",
+   "trades": "5–0",
    "week_return_pct": 42.3
   }
  ]

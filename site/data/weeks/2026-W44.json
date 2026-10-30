@@ -1,0 +1,47 @@
+{
+ "id": "2026-W44",
+ "start": "2026-10-26",
+ "end": "2026-10-30",
+ "published": "2026-10-30",
+ "headline": "The brief went 3–1 on the close but 1–3 on the first hour: it read the AI trade right, yet SPY kept dipping below the open before recovering. Friday is not graded yet.",
+ "brief_record": {
+  "week": {
+   "w": 3,
+   "l": 1
+  },
+  "first_hour": {
+   "w": 1,
+   "l": 3
+  },
+  "all_time": {
+   "w": 10,
+   "l": 12,
+   "hit_pct": 45.5,
+   "brier": 0.2537,
+   "graded": 22
+  }
+ },
+ "learned": [
+  "Best week so far: 3–1 on the close (10-26, 10-27, 10-28 right; 10-29 wrong by $0.57). The week's mean Brier was 0.243, against 0.254 all-time, and the all-time record moved from 7–11 to 10–12.",
+  "The AI-demand read worked. On 10-27 (CLS guide and Broadcom/Anthropic financing) and 10-28 (SK Hynix record profit), the AI driver was scored +1 GREEN and SPY closed +0.30% and +0.11% above the open. Those two days and 10-21 became rule R3.",
+  "On a tech gap-down driven by earnings, the damage stayed in the gap. On 10-29 GOOGL fell 12% and the Nasdaq fell 1.38%, but SPY went 768.79 → 769.36 because the Russell rose 1.0% and MSFT rose 3.6%. The Russell was already +0.24% pre-market, and the brief scored AI −1 RED anyway.",
+  "The first hour dipped below the open on 10-27 (−1.04) and 10-28 (−1.10) after narrow tech-led gaps, and both days then closed above the open. W13's first-hour fade has now held 4 of 4 times. The first hour and the close agreed only 2 of 4 days.",
+  "Pre-market quotes went stale before the open: the brief undersized the gap on 10-28 (+0.6 called vs +1.77) and 10-29 (−2.8 vs −3.52). On 10-29 the open gap was −0.46%, past R1's 0.4% line, so R1 would have leaned GREEN, which was right. This is the second time after 10-23 (W18).",
+  "Oil/Iran headlines had no effect again on all 4 days (WTI −1.8% to +2.0%), so W6 holds. Rates and data (durables, confidence, FOMC hold, GDP/PCE) were scored 0 and were right 4 of 4. Day type was called NORMAL every day, but 10-28 and 10-29 had QUIET ranges of 0.53% and 0.54%."
+ ],
+ "improve": [
+  "Re-check the gap at 9:25 and apply W18: if the early indication is 0.3–0.4% away from the prior close, treat R1 as firing unless the 9:25 indication is clearly under 0.35%.",
+  "On earnings-driven tech gap-downs, weigh breadth before the tech driver. If the Russell or Dow is flat-to-up pre-market while NQ leads lower, score the tech driver 0 because the damage is in the gap (W17, 3 of 4).",
+  "Stop treating the first hour as confirmation after a narrow tech-led gap-up. Expect a dip below the open by 10:30 (W13, 4 of 4) and judge the call at the close.",
+  "Size the day type down to QUIET on low-VIX event days (FOMC, mega-cap earnings after the close). VIX was 17–18 and ranges were about 0.5% on 10-28 and 10-29.",
+  "Use the 10-30 grade to settle the conflict between R1/R2 and W16. The Friday call faded a −1% AMZN/INTC gap at GREEN 52% while W16 said the gap would extend."
+ ],
+ "rule_changes": [
+  "R3 adopted 10-29 by the daily grade: a narrow NQ-led gap-up on a fundamental AI-demand catalyst means score +1 GREEN, cap at 55%, and expect a first-hour dip (evidence 10-21, 10-27, 10-28).",
+  "R2 fired once (10-26 W). Its record since adoption is 1–0.",
+  "W17 widened: a Dow- or Russell-led pre-market during AI-earnings weakness means SPY closes at or above its open (3 of 4; 10-30 pending).",
+  "W18 added: early 0.3–0.4% gaps tend to widen past R1's 0.4% line by 9:30 (10-23, 10-29).",
+  "No watching items were pruned or merged this week. None met the 1-in-3 removal bar; W8 is at 2 of 5."
+ ],
+ "trading_notes": []
+}
