@@ -8,6 +8,7 @@
 <meta name="theme-color" content="#0c1118">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="stylesheet" href="/assets/portfolio.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script src="/assets/app.js"></script>
 <script src="/assets/navigation.js" defer></script>
 <style>
@@ -26,6 +27,14 @@
   .langtoggle button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
   .entry .permalink { color: inherit; text-decoration: none; }
   .entry .permalink:hover { text-decoration: underline; }
+  .entry.private { border-color: var(--line-2); }
+  .entry .lock { display: inline-block; margin-left: 8px; padding: 2px 8px; border-radius: 999px; background: var(--well); border: 1px solid var(--line-2); font-size: 11px; letter-spacing: .08em; }
+  .owner-bar { margin-top: 28px; font-size: 13px; color: var(--muted); }
+  .owner-bar button, .owner-bar input { font: inherit; font-size: 13px; }
+  .owner-bar button { appearance: none; background: none; border: 0; color: var(--muted); text-decoration: underline; cursor: pointer; padding: 0; }
+  .owner-bar form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .owner-bar input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--well); color: inherit; min-width: 0; flex: 1 1 200px; }
+  .owner-bar form button { border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 12px; text-decoration: none; }
   @media (max-width: 520px) { .entry { padding: 20px 16px; } .entry p { font-size: 17px; } }
 </style>
 </head>
@@ -42,14 +51,15 @@
   <h1 class="title" data-i18n="title">Family memoirs</h1>
   <p class="sub" data-i18n="sub">Memoirs, family pictures, and the story behind all of it.</p>
   <div id="entries" aria-live="polite"><p class="small muted mt4">Loading…</p></div>
+  <div class="owner-bar" id="ownerBar"></div>
   <footer>© Erik Ortega · Salinas, CA</footer>
 </main>
 <script>
 (async () => {
   const box = $("#entries");
   const UI = {
-    es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento." },
-    en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment." },
+    es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento.", priv: "Privada", signin: "Entrar", signout: "Salir", send: "Enviar link", sent: "Revisa tu correo para el link.", owner: "Viendo entradas privadas." },
+    en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment.", priv: "Private", signin: "Sign in", signout: "Sign out", send: "Send link", sent: "Check your email for the link.", owner: "Showing private entries." },
   };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -59,9 +69,20 @@
   let saved = null; try { saved = localStorage.getItem("blog-lang"); } catch {}
   let L = ["es", "en"].includes(param) ? param : ["es", "en"].includes(saved) ? saved : "en";
 
+  // Private entries live in Supabase (blog_private), readable only by the owner when signed in.
+  const OWNER = "erik@erikortega.com";
+  const sb = window.supabase ? supabase.createClient("https://dthvmmjzlazsgybgzmtb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZtbWp6bGF6c2d5Ymd6bXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDczNzEsImV4cCI6MjEwODM4MzM3MX0.D8rke2iwHSISgMAr0pqAJ2qX2Ra9HygS-X0RiJHvywY") : null;
+  let session = null, priv = [], sent = false, showForm = false;
+  if (sb) {
+    try { session = (await sb.auth.getSession()).data.session; } catch {}
+    if (session && session.user && session.user.email === OWNER) {
+      try { const r = await sb.from("blog_private").select("*"); priv = (r.data || []).map((e) => Object.assign({}, e, { private: true })); } catch {}
+    }
+  }
+
   let data = null, failed = false;
-  try { data = await getJSON("/data/diary/index.json"); } catch { failed = true; }
-  const entries = ((data && data.entries) || []).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+  try { data = await getJSON("/data/diary/index.json"); } catch { failed = !priv.length; }
+  const entries = ((data && data.entries) || []).concat(priv).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
   // An entry's top-level fields are in its own language; e.en / e.es hold the translation.
   const view = (e) => (L === (e.lang || "en") || !e[L] ? e : Object.assign({}, e, e[L], { lang: L }));
 
@@ -69,16 +90,40 @@
     document.documentElement.lang = L;
     document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = UI[L][el.dataset.i18n]));
     document.querySelectorAll(".langtoggle button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === L)));
+    renderOwner();
     if (failed) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].error}</p></div>`; return; }
     if (!entries.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].empty}</p></div>`; return; }
     box.innerHTML = entries.map(view).map((e) => `
-    <article class="card entry" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
-      <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, L))}${e.moment ? " · " + esc(e.moment) : ""}</a></p>
+    <article class="card entry${e.private ? " private" : ""}" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
+      <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, L))}${e.moment ? " · " + esc(e.moment) : ""}</a>${e.private ? `<span class="lock">🔒 ${UI[L].priv}</span>` : ""}</p>
       ${e.title ? `<h2>${esc(e.title)}</h2>` : ""}
       ${e.photo && e.photo.src ? `<figure class="photo"><img src="${esc(e.photo.src)}" alt="${esc(e.alt || "")}" loading="lazy"></figure>` : ""}
       ${(e.paragraphs || []).map((t) => `<p>${esc(t)}</p>`).join("")}
     </article>`).join("");
   };
+
+  function renderOwner() {
+    const bar = $("#ownerBar");
+    if (!sb) { bar.innerHTML = ""; return; }
+    if (session) {
+      bar.innerHTML = `${session.user.email === OWNER ? UI[L].owner + " " : ""}<button type="button" id="signOut">${UI[L].signout}</button>`;
+      $("#signOut").onclick = async () => { await sb.auth.signOut(); location.reload(); };
+    } else if (sent) {
+      bar.textContent = UI[L].sent;
+    } else if (showForm) {
+      bar.innerHTML = `<form id="signForm"><input type="email" required autocomplete="email" placeholder="email" aria-label="Email"><button type="submit">${UI[L].send}</button></form>`;
+      $("#signForm").onsubmit = async (ev) => {
+        ev.preventDefault();
+        const email = ev.target.querySelector("input").value.trim();
+        const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + "/blog.html", shouldCreateUser: false } });
+        if (error) { alert(error.message); return; }
+        sent = true; renderOwner();
+      };
+    } else {
+      bar.innerHTML = `<button type="button" id="signIn">🔒 ${UI[L].signin}</button>`;
+      $("#signIn").onclick = () => { showForm = true; renderOwner(); };
+    }
+  }
 
   document.querySelectorAll(".langtoggle button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.lang === L) return;

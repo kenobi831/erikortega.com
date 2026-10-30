@@ -113,3 +113,23 @@ create policy journal_owner_read   on storage.objects for select using (bucket_i
 create policy journal_owner_write  on storage.objects for insert with check (bucket_id = 'journal' and public.is_owner());
 create policy journal_owner_update on storage.objects for update using (bucket_id = 'journal' and public.is_owner());
 create policy journal_owner_delete on storage.objects for delete using (bucket_id = 'journal' and public.is_owner());
+
+-- ── Private blog entries (migration blog_private, 2026-10-30) ─────────────
+-- Owner-only. Public entries stay in site/data/diary/index.json.
+create table if not exists public.blog_private (
+  id          text primary key,
+  date        date not null,
+  lang        text not null default 'es',
+  moment      text,
+  title       text,
+  paragraphs  jsonb not null default '[]'::jsonb,
+  en          jsonb,
+  es          jsonb,
+  created_at  timestamptz not null default now()
+);
+alter table public.blog_private enable row level security;
+drop policy if exists owner_all on public.blog_private;
+create policy owner_all on public.blog_private for all to authenticated
+  using ((select public.is_owner())) with check ((select public.is_owner()));
+revoke all on public.blog_private from anon;
+grant select, insert, update, delete on public.blog_private to authenticated;
