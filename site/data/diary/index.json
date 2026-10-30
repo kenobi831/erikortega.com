@@ -1,11 +1,13 @@
 {
-  "updated": "2026-10-26",
+  "updated": "2026-10-30",
   "entries": [
     {
       "id": "2026-10-26-manana",
       "date": "2026-10-26",
       "lang": "es",
-      "photo": { "src": "/assets/diary/2026-10-26-manana.jpg" },
+      "photo": {
+        "src": "/assets/diary/2026-10-26-manana.jpg"
+      },
       "moment": "Mañana",
       "title": "Un lunes cualquiera de octubre",
       "alt": "Erik, Santi y Sky acostados en la tierra, abrazados y sonriendo al sol",
@@ -22,6 +24,33 @@
           "Just another Monday in October. I head out early for work; it's still dark. As I back the car out, without thinking, I look for balls in the grass, like I used to, back when I'd always find Santi's in the yard.",
           "And suddenly the nostalgia hits me. My son doesn't play with balls anymore. He's 15, about to turn 16, and he's already bigger than me. I'll never again lift him in my arms or carry him on my shoulders. And that hurts.",
           "But I think that pain is also a form of love. It hurts because those years were worth it. I don't carry him on my shoulders anymore, but now I get something else: to watch him walk on his own, and to be there when he turns around looking for me. The balls aren't in the grass anymore, but what I planted in those years keeps growing."
+        ]
+      }
+    },
+    {
+      "id": "2026-10-29-octubre",
+      "date": "2026-10-29",
+      "lang": "es",
+      "moment": "Mañana",
+      "title": "Otro día de octubre",
+      "paragraphs": [
+        "Otro día de octubre. Todavía está oscuro cuando salgo de la casa. Una hora de camino al trabajo, y como siempre, en algún punto de la carretera, llega la nostalgia. Ya la conozco. Siempre se sube conmigo.",
+        "Hoy en la mañana vi las noticias: el hielo va a llegar con más fuerza aquí a Salinas. Y el miedo se me metió en el pecho. Miedo de que un día salga a trabajar y no regrese. De dejar a mi esposa, a mi hijo. Yo soy el que anda en las calles todos los días; si a alguien le toca, me toca a mí.",
+        "Y luego viene el otro miedo. Llegar a México con las manos vacías. Todo lo que he trabajado, lo poco que he ahorrado, se quedaría aquí. Llegaría sin un centavo, a empezar de cero a mi edad. Ya me imagino a la gente, a los amigos, riéndose. El que se fue al otro lado y regresó sin nada.",
+        "Para acabarla, el trabajo está lento. Y cuando el trabajo está lento, la cabeza no para.",
+        "Lo que más me duele es que mi esposa y mi hijo cargan conmigo ese estrés aunque no quiera. Que no se apague la luz, que los biles estén pagados, que a mi hijo no le falte nada. Todo eso lo llevo encima, y a veces se me sale por donde no debe. Contesto mal. Levanto la voz. Y después, ya solo, me siento feo. Pienso: no debí contestar así. Ellos no tienen la culpa. Debí portarme mejor.",
+        "No sé qué va a pasar. Lo que sí sé es por quién hago todo esto. Y aunque el miedo maneje conmigo todas las mañanas, el volante lo llevo yo."
+      ],
+      "en": {
+        "moment": "Morning",
+        "title": "Another day in October",
+        "paragraphs": [
+          "Another day in October. It's still dark when I leave the house. An hour's drive to work, and like always, somewhere along the highway, the nostalgia shows up. I know it by now. It always rides with me.",
+          "This morning I saw the news: the ice is going to come down harder here in Salinas. And the fear settled into my chest. Fear that one day I'll leave for work and not come back. Of leaving my wife, my son. I'm the one out on the streets every day; if it happens to anyone, it happens to me.",
+          "And then comes the other fear. Getting to Mexico empty-handed. Everything I've worked for, the little I've saved, would stay here. I'd arrive without a cent, starting from zero at my age. I can already picture people, my friends, laughing. The guy who went to the other side and came back with nothing.",
+          "On top of that, work is slow. And when work is slow, my head doesn't stop.",
+          "What hurts most is that my wife and son carry that stress with me, even though I don't want them to. Keeping the lights on, the bills paid, making sure my son has what he needs. I carry all of it, and sometimes it comes out where it shouldn't. I snap. I raise my voice. And afterward, alone, I feel awful. I think: I shouldn't have answered like that. It's not their fault. I should have done better.",
+          "I don't know what's going to happen. What I do know is who I do all this for. And even if fear rides with me every morning, I'm the one behind the wheel."
         ]
       }
     }
