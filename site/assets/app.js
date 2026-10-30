@@ -1,5 +1,10 @@
 // Shared helpers + components for erikortega.com public pages — no build step, no framework.
 // journal.html does NOT load this file (it has its own journal.js / journal.css).
+// Sign-in links can land on the home page if Supabase falls back to the Site URL.
+// Forward the token to the blog, which knows how to finish the sign-in.
+if (/access_token=|[?&]code=/.test(location.hash + location.search) && !/\/(blog|journal)\.html$/.test(location.pathname)) {
+  location.replace("/blog.html" + location.search + location.hash);
+}
 const SITE = {
   supabaseUrl: "https://dthvmmjzlazsgybgzmtb.supabase.co",
   supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZtbWp6bGF6c2d5Ymd6bXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDczNzEsImV4cCI6MjEwODM4MzM3MX0.D8rke2iwHSISgMAr0pqAJ2qX2Ra9HygS-X0RiJHvywY",
