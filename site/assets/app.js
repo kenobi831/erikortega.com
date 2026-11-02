@@ -34,6 +34,18 @@ const mondayOf = (iso) => isoAdd(iso, -((dateParts(iso).wd + 6) % 7));
 const etTime = (ts) => { try { return new Intl.DateTimeFormat("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" }).format(new Date(ts)) + " ET"; } catch { return ""; } };
 
 async function getJSON(path) {
+  if (path.startsWith("/data/")) {
+    try {
+      const key = encodeURIComponent(path.slice(6));
+      const r = await fetch(`${SITE.supabaseUrl}/rest/v1/site_data?select=body&path=eq.${key}`, {
+        headers: { apikey: SITE.supabaseAnonKey, Authorization: `Bearer ${SITE.supabaseAnonKey}` },
+      });
+      if (r.ok) {
+        const rows = await r.json();
+        if (rows.length) return rows[0].body;
+      }
+    } catch {}
+  }
   const r = await fetch(path, { cache: "no-cache" });
   if (!r.ok) throw new Error(`${path}: ${r.status}`);
   return r.json();
