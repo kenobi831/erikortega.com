@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-10",
+  "updated": "2026-11-16",
   "entries": [
     {
       "id": "2026-10-26-manana",
@@ -98,6 +98,35 @@
           "Forgive me.",
           "With all my love,",
           "Your brother."
+        ]
+      }
+    },
+    {
+      "id": "2026-11-16-noviembre",
+      "date": "2026-11-16",
+      "lang": "es",
+      "moment": "Mañana",
+      "title": "Noviembre otra vez",
+      "paragraphs": [
+        "Toda la semana trabajando. Noviembre, casi fin de año. Gracias a Dios ha habido trabajo, en la compañía y también por fuera. Los fines de semana han estado llenos: trabajé sábado y domingo, y la semana pasada también el sábado. Descansé el domingo, pero estaba tan cansado que ni lo disfruté.",
+        "Y ya viene diciembre. El cumpleaños de Andrea, mi esposa. El de mi hermana, el de mi sobrino. Luego Navidad. Demasiados gastos. No saben lo estresante que es para mí cuando llega noviembre, porque generalmente en estos días el trabajo baja mucho. Y todo se empieza a juntar. Pero todo sea porque estemos bien.",
+        "Hace poco hablé con mi hermano, allá en México. Siempre me da gusto platicar con él. Empieza serio, y de repente como que le cae el trancazo de que soy su hermano y no cualquiera, y se suelta. Ya todo vivaracho, como yo lo conozco.",
+        "Ay, ay, ay. Si supiera ese cabrón lo orgulloso que estoy de él. A lo mejor nunca se lo digo.",
+        "Él es el raro de la familia. A veces pienso que es adoptado… pero no, yo lo vi cuando lo trajo mi mamá en sus brazos. Era una chingaderita. Sí, sí es mi hermano.",
+        "Hoy voy manejando al trabajo. Llueve demasiado. Esperemos que todo salga bien.",
+        "Es todo por hoy. Gracias."
+      ],
+      "en": {
+        "moment": "Morning",
+        "title": "November again",
+        "paragraphs": [
+          "Working all week. November, almost the end of the year. Thank God there's been work, at the company and on the side too. The weekends have been packed: I worked Saturday and Sunday, and last week Saturday too. I rested on Sunday, but I was so tired I didn't even enjoy it.",
+          "And December is coming. Andrea's birthday, my wife. My sister's, my nephew's. Then Christmas. Too many expenses. You have no idea how stressful it is for me when November comes, because work usually slows way down this time of year. And it all starts piling up. But it's all worth it as long as we're doing well.",
+          "I talked with my brother not long ago, back in Mexico. I'm always glad to talk with him. He starts out serious, and then all of a sudden it's like it hits him that I'm his brother, not just anybody, and he loosens up. All lively, the way I know him.",
+          "Ay, ay, ay. If that son of a gun only knew how proud I am of him. Maybe I'll never tell him.",
+          "He's the odd one in the family. Sometimes I think he's adopted… but no, I saw him when my mom brought him home in her arms. He was a tiny little thing. Yeah, he's my brother all right.",
+          "Today I'm driving to work. It's pouring rain. Let's hope everything goes well.",
+          "That's all for today. Thanks."
         ]
       }
     }
