@@ -47,6 +47,49 @@ function matches(given: string, answers: string[]) {
   });
 }
 
+// Dates in any format: "7/9/85", "9-7-1985", "7 de septiembre de 1985", "September 7th, 1985", "19850907".
+const MONTHS: Record<string, number> = {};
+[["enero", "january"], ["febrero", "february"], ["marzo", "march"], ["abril", "april"], ["mayo", "may"], ["junio", "june"],
+ ["julio", "july"], ["agosto", "august"], ["septiembre", "september", "setiembre"], ["octubre", "october"],
+ ["noviembre", "november"], ["diciembre", "december"]].forEach((names, i) => names.forEach((n) => {
+  MONTHS[n] = i + 1; MONTHS[n.slice(0, 3)] = i + 1; MONTHS[n.slice(0, 4)] = i + 1;
+}));
+function dateMatches(given: string, iso: string) {
+  const [y, m, d] = iso.split("-").map(Number);
+  const toks = String(given || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+    .replace(/(\d)(st|nd|rd|th|ro|vo|to|o)\b/g, "$1").split(/[^a-z0-9]+/).filter(Boolean);
+  const isYear = (n: string) => Number(n) === y || (n.length === 2 && Number(n) === y % 100);
+  const nums = toks.filter((t) => /^\d+$/.test(t));
+  const month = toks.map((t) => MONTHS[t]).find(Boolean);
+  if (nums.length === 1 && nums[0].length === 8) {
+    const s = nums[0];
+    return [[s.slice(0, 2), s.slice(2, 4), s.slice(4)], [s.slice(2, 4), s.slice(0, 2), s.slice(4)], [s.slice(6), s.slice(4, 6), s.slice(0, 4)]]
+      .some(([dd, mm, yy]) => Number(dd) === d && Number(mm) === m && Number(yy) === y);
+  }
+  if (month) return month === m && nums.length === 2 && nums.some((n, i) => isYear(n) && Number(nums[1 - i]) === d);
+  if (nums.length !== 3) return false;
+  return nums.some((n, i) => {
+    if (!isYear(n)) return false;
+    const rest = nums.filter((_, j) => j !== i).map(Number);
+    return (rest[0] === d && rest[1] === m) || (rest[0] === m && rest[1] === d);
+  });
+}
+// A riddle part: "date" (ISO answers), "contains" (answer words must appear, e.g. a city), or plain text.
+type Part = { es: string; en: string; type?: string; answers: string[] };
+function partMatches(given: string, p: Part) {
+  if (p.type === "date") return p.answers.some((a) => dateMatches(given, a));
+  if (p.type === "contains") { const g = " " + norm(given) + " "; return p.answers.some((a) => g.includes(" " + norm(a) + " ")); }
+  return matches(given, p.answers);
+}
+type Riddle = { id: number; bank: string; q_es: string; q_en: string; answers: string[]; parts: Part[] | null };
+function riddleMatches(given: unknown, r: Riddle) {
+  if (r.parts && r.parts.length) {
+    const g = Array.isArray(given) ? given : [given];
+    return r.parts.every((p, i) => partMatches(String(g[i] ?? ""), p));
+  }
+  return matches(String(Array.isArray(given) ? given[0] ?? "" : given ?? ""), r.answers);
+}
+
 const validDevice = (d: unknown) => typeof d === "string" && /^[A-Za-z0-9-]{16,64}$/.test(d);
 
 async function lockStatus(device: string, ipHash: string) {
@@ -62,9 +105,9 @@ async function lockStatus(device: string, ipHash: string) {
 }
 
 async function riddlesById(ids: number[]) {
-  const { data } = await sb.from("blog_riddles").select("id,bank,q_es,q_en,answers").in("id", ids);
+  const { data } = await sb.from("blog_riddles").select("id,bank,q_es,q_en,answers,parts").in("id", ids);
   const byId = new Map((data || []).map((r) => [r.id, r]));
-  return ids.map((id) => byId.get(id)).filter(Boolean) as { id: number; bank: string; q_es: string; q_en: string; answers: string[] }[];
+  return ids.map((id) => byId.get(id)).filter(Boolean) as Riddle[];
 }
 
 async function challenge(device: string, ipHash: string) {
@@ -90,16 +133,18 @@ async function challenge(device: string, ipHash: string) {
     row = ins.data;
   }
   const rs = await riddlesById(row.riddle_ids);
-  return json({ challenge: row.id, riddles: rs.map((r) => ({ es: r.q_es, en: r.q_en })) });
+  return json({ challenge: row.id, riddles: rs.map((r) => ({
+    es: r.q_es, en: r.q_en, fields: r.parts && r.parts.length ? r.parts.map((p) => ({ es: p.es, en: p.en })) : null,
+  })) });
 }
 
-async function answer(device: string, ipHash: string, id: string, answers: string[]) {
+async function answer(device: string, ipHash: string, id: string, answers: unknown[]) {
   const { data: c } = await sb.from("blog_gate_challenges").select("*").eq("id", id).maybeSingle();
   if (!c || c.device !== device) return json({ error: "bad_challenge" }, 400);
   if (c.answered_at) return json({ error: "already_answered" }, 409);
 
   const rs = await riddlesById(c.riddle_ids);
-  const ok = rs.length > 0 && rs.every((r, i) => matches((answers || [])[i], r.answers));
+  const ok = rs.length > 0 && rs.every((r, i) => riddleMatches((answers || [])[i], r));
   // Mark answered only if still unanswered (one shot, even with two tabs racing).
   const upd = await sb.from("blog_gate_challenges").update({ answered_at: new Date().toISOString(), ok })
     .eq("id", id).is("answered_at", null).select("id");
@@ -145,7 +190,7 @@ Deno.serve(async (req) => {
     if (!validDevice(body.device)) return json({ error: "bad_device" }, 400);
     const ipHash = await sha256("blog-gate:" + ipOf(req) + ":" + Deno.env.get("SUPABASE_SERVICE_ROLE_KEY"));
     if (body.action === "challenge") return await challenge(body.device as string, ipHash);
-    if (body.action === "answer") return await answer(body.device as string, ipHash, String(body.challenge), body.answers as string[]);
+    if (body.action === "answer") return await answer(body.device as string, ipHash, String(body.challenge), Array.isArray(body.answers) ? body.answers : []);
     return json({ error: "action" }, 400);
   } catch (e) {
     console.error(e);

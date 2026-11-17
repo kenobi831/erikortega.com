@@ -86,6 +86,8 @@
   .riddle q { display: block; quotes: none; font-family: Georgia, serif; font-size: 17px; line-height: 1.55; color: #e8eef4; margin: 0 0 10px; }
   .riddle input { width: 100%; box-sizing: border-box; font-size: 12px; padding: 12px; background: #000; color: var(--green);
     border: 3px solid var(--line-2); border-radius: 0; caret-color: var(--green); }
+  .riddle .flabel { display: block; font-size: 8px; color: var(--cyan); margin: 10px 0 6px; }
+  .riddle input + .flabel { margin-top: 12px; }
   .riddle input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 12px rgba(84,211,155,.35); }
   .press { appearance: none; cursor: pointer; width: 100%; font-size: 12px; padding: 14px; color: #000; background: var(--arcade-yel);
     border: 0; box-shadow: 0 6px 0 #a89a1e, 0 6px 0 4px #000, 0 0 0 4px #000; margin-top: 6px; }
@@ -96,7 +98,7 @@
   @keyframes blink { 50% { opacity: 0; } }
   .over h2 { color: var(--red); text-shadow: 3px 3px 0 #3d0a0a; font-size: 22px; }
   .over .count { font-size: 18px; color: var(--arcade-yel); margin: 14px 0 10px; }
-  .gate .sound { position: absolute; z-index: 4; right: 26px; bottom: 26px; font-size: 8px; background: #000; color: var(--muted);
+  .gate .sound { position: relative; z-index: 4; display: block; margin: -22px 26px 30px auto; font-size: 8px; background: #000; color: var(--muted);
     border: 2px solid var(--line-2); padding: 6px 8px; cursor: pointer; }
   .entries-in { animation: fadein .6s ease-out both; }
   @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
@@ -134,10 +136,10 @@
   const UI = {
     es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento.", priv: "Privada", signin: "Entrar", signout: "Salir", send: "Enviar link", sent: "Revisa tu correo para el link.", owner: "Viendo todo como dueño.",
       gateTitle: "ZONA PRIVADA", gateLead: "PLAYER 1: RESUELVE LAS ADIVINANZAS PARA ABRIR LA PUERTA", n: (i) => `ADIVINANZA ${i}`, ph: "TU RESPUESTA", go: "ENTRAR ▶", warn: "SOLO UN INTENTO. SI FALLAS, LA PUERTA SE QUEDA CERRADA 24 HORAS.", wait: "CARGANDO…",
-      over: "GAME OVER", overLead: "ESA NO ERA. LA PUERTA SE QUEDA CERRADA.", cont: "CONTINUE?", back: "REGRESA EN", busy: "DEMASIADOS INTENTOS DESDE ESTA RED. REGRESA MAÑANA.", gateErr: "LA PUERTA NO RESPONDE. INTENTA EN UN RATO.", closed: "CERRADO POR AHORA. REGRESA PRONTO.", sound: "SONIDO", passLeft: (d) => `Tu pase vence ${d}.`, empty2: "LLENA LAS DOS RESPUESTAS" },
+      over: "GAME OVER", overLead: "ESA NO ERA. LA PUERTA SE QUEDA CERRADA.", cont: "CONTINUE?", back: "REGRESA EN", busy: "DEMASIADOS INTENTOS DESDE ESTA RED. REGRESA MAÑANA.", gateErr: "LA PUERTA NO RESPONDE. INTENTA EN UN RATO.", closed: "CERRADO POR AHORA. REGRESA PRONTO.", sound: "SONIDO", passLeft: (d) => `Tu pase vence ${d}.`, empty2: "LLENA TODAS LAS RESPUESTAS" },
     en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment.", priv: "Private", signin: "Sign in", signout: "Sign out", send: "Send link", sent: "Check your email for the link.", owner: "Viewing everything as owner.",
       gateTitle: "PRIVATE ZONE", gateLead: "PLAYER 1: SOLVE THE RIDDLES TO OPEN THE DOOR", n: (i) => `RIDDLE ${i}`, ph: "YOUR ANSWER", go: "ENTER ▶", warn: "ONE TRY ONLY. MISS ONE AND THE DOOR STAYS SHUT FOR 24 HOURS.", wait: "LOADING…",
-      over: "GAME OVER", overLead: "WRONG ANSWER. THE DOOR STAYS SHUT.", cont: "CONTINUE?", back: "COME BACK IN", busy: "TOO MANY TRIES FROM THIS NETWORK. COME BACK TOMORROW.", gateErr: "THE DOOR ISN'T ANSWERING. TRY AGAIN SOON.", closed: "CLOSED FOR NOW. COME BACK SOON.", sound: "SOUND", passLeft: (d) => `Your pass expires ${d}.`, empty2: "FILL IN BOTH ANSWERS" },
+      over: "GAME OVER", overLead: "WRONG ANSWER. THE DOOR STAYS SHUT.", cont: "CONTINUE?", back: "COME BACK IN", busy: "TOO MANY TRIES FROM THIS NETWORK. COME BACK TOMORROW.", gateErr: "THE DOOR ISN'T ANSWERING. TRY AGAIN SOON.", closed: "CLOSED FOR NOW. COME BACK SOON.", sound: "SOUND", passLeft: (d) => `Your pass expires ${d}.`, empty2: "FILL IN EVERY ANSWER" },
   };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -235,8 +237,8 @@
     else {
       screen = `<h2 class="px">${T.gateTitle}</h2><p class="px lead">${T.gateLead}</p>
         <form id="riddleForm" autocomplete="off">
-          ${gateState.riddles.map((r, i) => `<div class="riddle"><p class="px num">${T.n(i + 1)}</p><q lang="${L}">${esc(r[L] || r.es)}</q>
-            <input class="px" name="a${i}" aria-label="${T.n(i + 1)}" placeholder="${T.ph}" autocapitalize="off" spellcheck="false" maxlength="80"></div>`).join("")}
+          ${gateState.riddles.map((r, i) => `<div class="riddle" data-r="${i}"><p class="px num">${T.n(i + 1)}</p><q lang="${L}">${esc(r[L] || r.es)}</q>
+            ${(r.fields || [null]).map((f, j) => `${f ? `<label class="px flabel" for="a${i}_${j}">${esc(f[L] || f.es)}</label>` : ""}<input class="px" id="a${i}_${j}" name="a${i}_${j}" aria-label="${f ? esc(f[L] || f.es) : T.n(i + 1)}" placeholder="${T.ph}" autocapitalize="off" spellcheck="false" maxlength="80">`).join("")}</div>`).join("")}
           <button class="px press" type="submit">${T.go}</button>
           <p class="px warn">${T.warn}</p>
         </form>`;
@@ -258,8 +260,11 @@
   async function onAnswer(ev) {
     ev.preventDefault();
     const inputs = Array.from(ev.target.querySelectorAll("input"));
-    const answers = inputs.map((i) => i.value.trim());
-    if (answers.some((a) => !a)) { const w = ev.target.querySelector(".warn"); w.textContent = UI[L].empty2; w.classList.add("blink"); return; }
+    if (inputs.some((i) => !i.value.trim())) { const w = ev.target.querySelector(".warn"); w.textContent = UI[L].empty2; w.classList.add("blink"); return; }
+    const answers = Array.from(ev.target.querySelectorAll(".riddle"), (d) => {
+      const v = Array.from(d.querySelectorAll("input"), (i) => i.value.trim());
+      return v.length > 1 ? v : v[0];
+    });
     const btn = ev.target.querySelector("button"); btn.disabled = true;
     const r = await gate({ action: "answer", challenge: gateState.challenge, answers });
     const g = gateBox.querySelector(".gate");

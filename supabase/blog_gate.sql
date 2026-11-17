@@ -71,3 +71,4 @@ drop policy if exists blog_owner_read on storage.objects;
 drop policy if exists blog_owner_write on storage.objects;
 create policy blog_owner_read  on storage.objects for select using (bucket_id = 'blog' and public.is_owner());
 create policy blog_owner_write on storage.objects for insert with check (bucket_id = 'blog' and public.is_owner());
+alter table public.blog_riddles add column if not exists parts jsonb;  -- multi-part riddles: [{es,en,type:'date'|'contains'|text,answers}]
