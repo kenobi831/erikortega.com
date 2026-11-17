@@ -74,10 +74,14 @@ function dateMatches(given: string, iso: string) {
     return (rest[0] === d && rest[1] === m) || (rest[0] === m && rest[1] === d);
   });
 }
-// A riddle part: "date" (ISO answers), "contains" (answer words must appear, e.g. a city), or plain text.
+// A riddle part: "date" (ISO answers), "contains" (answer words must appear, e.g. a city),
+// "exact" (every word must match, articles included; case, accents and punctuation still ignored), or plain text.
 type Part = { es: string; en: string; type?: string; answers: string[] };
+const exactNorm = (s: string) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
+  .replace(/[^a-z0-9ñ ]+/g, " ").split(/\s+/).filter(Boolean).join(" ");
 function partMatches(given: string, p: Part) {
   if (p.type === "date") return p.answers.some((a) => dateMatches(given, a));
+  if (p.type === "exact") return p.answers.some((a) => exactNorm(a) === exactNorm(given));
   if (p.type === "contains") { const g = " " + norm(given) + " "; return p.answers.some((a) => g.includes(" " + norm(a) + " ")); }
   return matches(given, p.answers);
 }
@@ -134,7 +138,7 @@ async function challenge(device: string, ipHash: string) {
   }
   const rs = await riddlesById(row.riddle_ids);
   return json({ challenge: row.id, riddles: rs.map((r) => ({
-    es: r.q_es, en: r.q_en, fields: r.parts && r.parts.length ? r.parts.map((p) => ({ es: p.es, en: p.en })) : null,
+    es: r.q_es, en: r.q_en, fields: r.parts && r.parts.length > 1 ? r.parts.map((p) => ({ es: p.es, en: p.en })) : null,
   })) });
 }
 
