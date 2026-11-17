@@ -134,10 +134,10 @@
   const UI = {
     es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento.", priv: "Privada", signin: "Entrar", signout: "Salir", send: "Enviar link", sent: "Revisa tu correo para el link.", owner: "Viendo todo como dueño.",
       gateTitle: "ZONA PRIVADA", gateLead: "PLAYER 1: RESUELVE LAS ADIVINANZAS PARA ABRIR LA PUERTA", n: (i) => `ADIVINANZA ${i}`, ph: "TU RESPUESTA", go: "ENTRAR ▶", warn: "SOLO UN INTENTO. SI FALLAS, LA PUERTA SE QUEDA CERRADA 24 HORAS.", wait: "CARGANDO…",
-      over: "GAME OVER", overLead: "ESA NO ERA. LA PUERTA SE QUEDA CERRADA.", cont: "CONTINUE?", back: "REGRESA EN", busy: "DEMASIADOS INTENTOS DESDE ESTA RED. REGRESA MAÑANA.", gateErr: "LA PUERTA NO RESPONDE. INTENTA EN UN RATO.", sound: "SONIDO", passLeft: (d) => `Tu pase vence ${d}.`, empty2: "LLENA LAS DOS RESPUESTAS" },
+      over: "GAME OVER", overLead: "ESA NO ERA. LA PUERTA SE QUEDA CERRADA.", cont: "CONTINUE?", back: "REGRESA EN", busy: "DEMASIADOS INTENTOS DESDE ESTA RED. REGRESA MAÑANA.", gateErr: "LA PUERTA NO RESPONDE. INTENTA EN UN RATO.", closed: "CERRADO POR AHORA. REGRESA PRONTO.", sound: "SONIDO", passLeft: (d) => `Tu pase vence ${d}.`, empty2: "LLENA LAS DOS RESPUESTAS" },
     en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment.", priv: "Private", signin: "Sign in", signout: "Sign out", send: "Send link", sent: "Check your email for the link.", owner: "Viewing everything as owner.",
       gateTitle: "PRIVATE ZONE", gateLead: "PLAYER 1: SOLVE THE RIDDLES TO OPEN THE DOOR", n: (i) => `RIDDLE ${i}`, ph: "YOUR ANSWER", go: "ENTER ▶", warn: "ONE TRY ONLY. MISS ONE AND THE DOOR STAYS SHUT FOR 24 HOURS.", wait: "LOADING…",
-      over: "GAME OVER", overLead: "WRONG ANSWER. THE DOOR STAYS SHUT.", cont: "CONTINUE?", back: "COME BACK IN", busy: "TOO MANY TRIES FROM THIS NETWORK. COME BACK TOMORROW.", gateErr: "THE DOOR ISN'T ANSWERING. TRY AGAIN SOON.", sound: "SOUND", passLeft: (d) => `Your pass expires ${d}.`, empty2: "FILL IN BOTH ANSWERS" },
+      over: "GAME OVER", overLead: "WRONG ANSWER. THE DOOR STAYS SHUT.", cont: "CONTINUE?", back: "COME BACK IN", busy: "TOO MANY TRIES FROM THIS NETWORK. COME BACK TOMORROW.", gateErr: "THE DOOR ISN'T ANSWERING. TRY AGAIN SOON.", closed: "CLOSED FOR NOW. COME BACK SOON.", sound: "SOUND", passLeft: (d) => `Your pass expires ${d}.`, empty2: "FILL IN BOTH ANSWERS" },
   };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
@@ -213,7 +213,7 @@
     const r = await gate({ action: "challenge" });
     if (r.locked) gateState = r.until ? { mode: "over", until: r.until } : { mode: "busy" };
     else if (r.riddles) gateState = { mode: "riddles", riddles: r.riddles, challenge: r.challenge };
-    else gateState = { mode: "error" };
+    else gateState = { mode: r.error === "no_riddles" ? "closed" : "error" };
     render();
   }
 
@@ -228,6 +228,7 @@
     const T = UI[L];
     let screen = "";
     if (gateState.mode === "loading") screen = `<p class="px lead blink">${T.wait}</p>`;
+    else if (gateState.mode === "closed") screen = `<h2 class="px">${T.gateTitle}</h2><p class="px lead">${T.closed}</p>`;
     else if (gateState.mode === "error") screen = `<h2 class="px">${T.gateTitle}</h2><p class="px lead">${T.gateErr}</p>`;
     else if (gateState.mode === "busy") screen = `<div class="over"><h2 class="px">${T.over}</h2><p class="px lead">${T.busy}</p></div>`;
     else if (gateState.mode === "over") screen = `<div class="over"><h2 class="px">${T.over}</h2><p class="px lead">${T.overLead}</p><p class="px lead blink">${T.cont}</p><p class="px count">${T.back} ${countdown(gateState.until)}</p></div>`;
