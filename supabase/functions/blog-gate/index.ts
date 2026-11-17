@@ -1,10 +1,10 @@
 // blog-gate: the doorman for erikortega.com/blog.
-// Visitors get one riddle about Erik and one random riddle. Both right → a 7-day pass.
+// Visitors get one riddle about Erik and one random riddle. Both right → a 1-day pass.
 // One wrong answer locks that device for 24 h; one IP gets a limited number of tries per day.
 // Answers are checked here, never in the page. Deployed with verify_jwt = false (public).
 import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
-const PASS_DAYS = 7;
+const PASS_DAYS = 1;
 const LOCK_HOURS = 24;
 const IP_TRIES_PER_DAY = 8;      // a whole household shares one IP
 const PHOTO_URL_SECONDS = 3600;
