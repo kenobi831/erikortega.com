@@ -56,3 +56,14 @@ git -C erikortega.com commit -m "Brief 2026-10-26" && git -C erikortega.com push
 ```
 
 If the push is rejected, pull --rebase and push again (once).
+
+## Blog (private, behind the riddle gate)
+
+The blog is not public. Since 2026-11-16 entries live in Supabase, not in the repo.
+
+- **New entry:** insert a row into `public.blog_entries` (id `YYYY-MM-DD-slug`, `date`, `lang` = `es`, `title`, `moment`, `paragraphs` jsonb array, `en` jsonb with the English `title`/`moment`/`paragraphs`/`alt`). Never put entries back in `site/`.
+- **Photos:** upload to the private `blog` storage bucket and set `photo_path` (e.g. `diary/2026-10-26-manana.jpg`). Strip EXIF/location first.
+- **Owner-only entries:** `public.blog_private` (Erik only, never shown to visitors).
+- **Riddles:** `public.blog_riddles`, `bank` = `me` (about Erik) or `random`; `answers` lists every accepted answer in either language (accents, case, punctuation and leading articles are ignored). Set `active = false` to retire one.
+- **Gate rules** (`supabase/functions/blog-gate`): one riddle from each bank; both right → 7-day pass; any miss → that device is locked 24 h; max 8 tries per IP per day. Reloading shows the same riddles until answered.
+- Schema: `supabase/blog_gate.sql`.

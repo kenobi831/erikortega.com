@@ -4,8 +4,12 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Blog · Erik Ortega</title>
-<meta name="description" content="Erik Ortega's blog: memoirs, mornings, and the story behind all of it.">
+<meta name="description" content="Erik Ortega's family blog. Answer the riddles to get in.">
+<meta name="robots" content="noindex">
 <meta name="theme-color" content="#0c1118">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap">
 <link rel="stylesheet" href="/assets/style.css">
 <link rel="stylesheet" href="/assets/portfolio.css">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
@@ -35,7 +39,71 @@
   .owner-bar form { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
   .owner-bar input { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--line-2); background: var(--well); color: inherit; min-width: 0; flex: 1 1 200px; }
   .owner-bar form button { border: 1px solid var(--line-2); border-radius: 8px; padding: 8px 12px; text-decoration: none; }
+  .pass-note { margin-top: 10px; font-size: 12px; color: var(--faint); }
   @media (max-width: 520px) { .entry { padding: 20px 16px; } .entry p { font-size: 17px; } }
+
+  /* ── The arcade gate ───────────────────────────────────────────── */
+  .px { font-family: "Press Start 2P", ui-monospace, monospace; letter-spacing: 0; }
+  .gate { position: relative; margin-top: 24px; border-radius: 6px; overflow: hidden; min-height: 560px;
+    background: #05070b; border: 4px solid #000; box-shadow: 0 0 0 4px var(--line-2), 0 18px 40px rgba(0,0,0,.45);
+    image-rendering: pixelated; }
+  .gate.shake { animation: shake .45s steps(6) 1; }
+  @keyframes shake { 0%,100% { transform: translate(0,0); } 20% { transform: translate(-4px,2px); } 40% { transform: translate(4px,-2px); } 60% { transform: translate(-3px,-2px); } 80% { transform: translate(3px,2px); } }
+
+  /* the two steel doors */
+  .door { position: absolute; top: 0; bottom: 0; width: 50%; z-index: 1;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,.35) 0 4px, transparent 4px 32px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,.06) 0 4px, transparent 4px 24px),
+      linear-gradient(180deg, #3b4656, #232b36 60%, #1a2029);
+    transition: transform 1.6s steps(12); }
+  .door.l { left: 0; border-right: 4px solid #0a0d12; }
+  .door.r { right: 0; border-left: 4px solid #0a0d12; }
+  .door::before { content: ""; position: absolute; inset: 12px; border: 4px solid #4f5d70; box-shadow: inset 0 0 0 4px #161c24; }
+  .door::after { content: ""; position: absolute; top: 50%; width: 16px; height: 48px; margin-top: -24px; background: var(--arcade-yel); box-shadow: 0 0 0 4px #000, 0 0 18px rgba(255,243,108,.5); }
+  .door.l::after { right: 14px; } .door.r::after { left: 14px; }
+  .gate.open .door.l { transform: translateX(-100%); }
+  .gate.open .door.r { transform: translateX(100%); }
+  .gate .behind { position: absolute; inset: 0; z-index: 0; display: grid; place-items: center; text-align: center;
+    font-size: 16px; line-height: 2; color: var(--arcade-yel); text-shadow: 3px 3px 0 #b2307f, 0 0 18px rgba(255,243,108,.45);
+    background: radial-gradient(circle at 50% 50%, #1b2a3c, #05070b 70%); }
+  .gate .stripe { position: absolute; left: 0; right: 0; height: 16px; z-index: 2; pointer-events: none;
+    background: repeating-linear-gradient(45deg, #ffca65 0 16px, #111 16px 32px); transition: opacity .3s; }
+  .gate .stripe.t { top: 0; } .gate .stripe.b { bottom: 0; }
+  .gate.open .stripe { opacity: 0; }
+
+  /* the screen on top of the doors */
+  .screen { position: relative; z-index: 3; margin: 40px 18px; padding: 22px 18px 20px; background: rgba(4,6,10,.94);
+    border: 4px solid var(--cyan); box-shadow: 0 0 0 4px #000, 0 0 24px rgba(67,255,224,.25); color: var(--ink);
+    transition: opacity .35s; }
+  .screen::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,.035) 0 1px, transparent 1px 3px); }
+  .gate.open .screen { opacity: 0; pointer-events: none; }
+  .screen h2 { font-size: 15px; line-height: 1.6; color: var(--arcade-yel); margin: 0 0 6px; text-shadow: 3px 3px 0 #b2307f; }
+  .screen .lead { font-size: 9px; line-height: 1.9; color: var(--cyan); margin: 0 0 18px; }
+  .riddle { margin: 0 0 18px; }
+  .riddle .num { font-size: 9px; color: var(--mag); margin: 0 0 8px; }
+  .riddle q { display: block; quotes: none; font-family: Georgia, serif; font-size: 17px; line-height: 1.55; color: #e8eef4; margin: 0 0 10px; }
+  .riddle input { width: 100%; box-sizing: border-box; font-size: 12px; padding: 12px; background: #000; color: var(--green);
+    border: 3px solid var(--line-2); border-radius: 0; caret-color: var(--green); }
+  .riddle input:focus { outline: none; border-color: var(--green); box-shadow: 0 0 12px rgba(84,211,155,.35); }
+  .press { appearance: none; cursor: pointer; width: 100%; font-size: 12px; padding: 14px; color: #000; background: var(--arcade-yel);
+    border: 0; box-shadow: 0 6px 0 #a89a1e, 0 6px 0 4px #000, 0 0 0 4px #000; margin-top: 6px; }
+  .press:active { transform: translateY(4px); box-shadow: 0 2px 0 #a89a1e, 0 2px 0 4px #000, 0 0 0 4px #000; }
+  .press:disabled { opacity: .5; cursor: wait; }
+  .warn { font-size: 8px; line-height: 1.9; color: var(--red); margin: 18px 0 0; }
+  .blink { animation: blink 1s steps(1) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .over h2 { color: var(--red); text-shadow: 3px 3px 0 #3d0a0a; font-size: 22px; }
+  .over .count { font-size: 18px; color: var(--arcade-yel); margin: 14px 0 10px; }
+  .gate .sound { position: absolute; z-index: 4; right: 26px; bottom: 26px; font-size: 8px; background: #000; color: var(--muted);
+    border: 2px solid var(--line-2); padding: 6px 8px; cursor: pointer; }
+  .entries-in { animation: fadein .6s ease-out both; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @media (prefers-reduced-motion: reduce) {
+    .door { transition: none; } .gate.shake { animation: none; } .blink { animation: none; } .entries-in { animation: none; }
+  }
+  @media (max-width: 520px) { .screen { margin: 32px 10px; padding: 18px 12px; } .gate { min-height: 600px; } }
 </style>
 </head>
 <body>
@@ -50,63 +118,186 @@
   </div>
   <h1 class="title" data-i18n="title">Family memoirs</h1>
   <p class="sub" data-i18n="sub">Memoirs, family pictures, and the story behind all of it.</p>
-  <div id="entries" aria-live="polite"><p class="small muted mt4">Loading…</p></div>
+  <div id="gateBox"></div>
+  <div id="entries" aria-live="polite"></div>
   <div class="owner-bar" id="ownerBar"></div>
   <footer>© Erik Ortega · Salinas, CA</footer>
 </main>
 <script>
 (async () => {
-  const box = $("#entries");
+  const PROJECT = "https://dthvmmjzlazsgybgzmtb.supabase.co";
+  const ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZtbWp6bGF6c2d5Ymd6bXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDczNzEsImV4cCI6MjEwODM4MzM3MX0.D8rke2iwHSISgMAr0pqAJ2qX2Ra9HygS-X0RiJHvywY";
+  const GATE = PROJECT + "/functions/v1/blog-gate";
+  const OWNER = "erik@erikortega.com";
+  const box = $("#entries"), gateBox = $("#gateBox");
+
   const UI = {
-    es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento.", priv: "Privada", signin: "Entrar", signout: "Salir", send: "Enviar link", sent: "Revisa tu correo para el link.", owner: "Viendo entradas privadas." },
-    en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment.", priv: "Private", signin: "Sign in", signout: "Sign out", send: "Send link", sent: "Check your email for the link.", owner: "Showing private entries." },
+    es: { title: "Memorias de familia", sub: "Memorias, fotos de familia y la historia detrás de todo.", empty: "La primera entrada viene pronto.", error: "El blog no cargó. Intenta de nuevo en un momento.", priv: "Privada", signin: "Entrar", signout: "Salir", send: "Enviar link", sent: "Revisa tu correo para el link.", owner: "Viendo todo como dueño.",
+      gateTitle: "ZONA PRIVADA", gateLead: "PLAYER 1: RESUELVE LAS ADIVINANZAS PARA ABRIR LA PUERTA", n: (i) => `ADIVINANZA ${i}`, ph: "TU RESPUESTA", go: "ENTRAR ▶", warn: "SOLO UN INTENTO. SI FALLAS, LA PUERTA SE QUEDA CERRADA 24 HORAS.", wait: "CARGANDO…",
+      over: "GAME OVER", overLead: "ESA NO ERA. LA PUERTA SE QUEDA CERRADA.", cont: "CONTINUE?", back: "REGRESA EN", busy: "DEMASIADOS INTENTOS DESDE ESTA RED. REGRESA MAÑANA.", gateErr: "LA PUERTA NO RESPONDE. INTENTA EN UN RATO.", sound: "SONIDO", passLeft: (d) => `Tu pase vence ${d}.`, empty2: "LLENA LAS DOS RESPUESTAS" },
+    en: { title: "Family memoirs", sub: "Memoirs, family pictures, and the story behind all of it.", empty: "First entry coming soon.", error: "The blog didn't load. Refresh in a moment.", priv: "Private", signin: "Sign in", signout: "Sign out", send: "Send link", sent: "Check your email for the link.", owner: "Viewing everything as owner.",
+      gateTitle: "PRIVATE ZONE", gateLead: "PLAYER 1: SOLVE THE RIDDLES TO OPEN THE DOOR", n: (i) => `RIDDLE ${i}`, ph: "YOUR ANSWER", go: "ENTER ▶", warn: "ONE TRY ONLY. MISS ONE AND THE DOOR STAYS SHUT FOR 24 HOURS.", wait: "LOADING…",
+      over: "GAME OVER", overLead: "WRONG ANSWER. THE DOOR STAYS SHUT.", cont: "CONTINUE?", back: "COME BACK IN", busy: "TOO MANY TRIES FROM THIS NETWORK. COME BACK TOMORROW.", gateErr: "THE DOOR ISN'T ANSWERING. TRY AGAIN SOON.", sound: "SOUND", passLeft: (d) => `Your pass expires ${d}.`, empty2: "FILL IN BOTH ANSWERS" },
   };
   const MESES = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
   const DIAS = ["domingo","lunes","martes","miércoles","jueves","viernes","sábado"];
   const fecha = (iso, L) => { const p = dateParts(iso); return L === "es" ? `${DIAS[p.wd]} ${p.d} de ${MESES[p.m - 1]}, ${p.y}` : longDate(iso); };
 
+  const store = { get: (k) => { try { return localStorage.getItem(k); } catch { return null; } }, set: (k, v) => { try { localStorage.setItem(k, v); } catch {} }, del: (k) => { try { localStorage.removeItem(k); } catch {} } };
   const param = new URLSearchParams(location.search).get("lang");
-  let saved = null; try { saved = localStorage.getItem("blog-lang"); } catch {}
+  const saved = store.get("blog-lang");
   let L = ["es", "en"].includes(param) ? param : ["es", "en"].includes(saved) ? saved : "en";
+  const reduced = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  // Private entries live in Supabase (blog_private), readable only by the owner when signed in.
-  const OWNER = "erik@erikortega.com";
-  const sb = window.supabase ? supabase.createClient("https://dthvmmjzlazsgybgzmtb.supabase.co", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR0aHZtbWp6bGF6c2d5Ymd6bXRiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4MDczNzEsImV4cCI6MjEwODM4MzM3MX0.D8rke2iwHSISgMAr0pqAJ2qX2Ra9HygS-X0RiJHvywY") : null;
-  let session = null, priv = [], sent = false, showForm = false;
-  if (sb) {
-    try { session = (await sb.auth.getSession()).data.session; } catch {}
-    if (session && session.user && session.user.email === OWNER) {
-      try { const r = await sb.from("blog_private").select("*"); priv = (r.data || []).map((e) => Object.assign({}, e, { private: true })); } catch {}
-    }
+  let device = store.get("blog-device");
+  if (!device) { device = (crypto.randomUUID ? crypto.randomUUID() : Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, "0")).join("")); store.set("blog-device", device); }
+
+  const gate = async (body) => {
+    const r = await fetch(GATE, { method: "POST", headers: { "content-type": "application/json", apikey: ANON }, body: JSON.stringify(Object.assign({ device }, body)) });
+    const j = await r.json().catch(() => ({}));
+    return Object.assign({ status: r.status }, j);
+  };
+
+  // ── state ──
+  const sb = window.supabase ? supabase.createClient(PROJECT, ANON) : null;
+  let session = null, isOwner = false, sent = false, showForm = false;
+  let entries = null, failed = false, passExpires = null;
+  let gateState = null; // { mode: 'riddles'|'over'|'busy'|'error'|'loading', riddles, challenge, until }
+  let soundOn = store.get("blog-sound") !== "off";
+
+  if (sb) { try { session = (await sb.auth.getSession()).data.session; } catch {} }
+  isOwner = !!(session && session.user && session.user.email === OWNER);
+
+  // ── 8-bit sounds ──
+  let ac = null;
+  const tone = (freq, start, dur, type = "square", vol = 0.06) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.setValueAtTime(freq, ac.currentTime + start);
+    g.gain.setValueAtTime(vol, ac.currentTime + start); g.gain.exponentialRampToValueAtTime(0.0001, ac.currentTime + start + dur);
+    o.connect(g).connect(ac.destination); o.start(ac.currentTime + start); o.stop(ac.currentTime + start + dur + 0.02);
+  };
+  const play = (kind) => {
+    if (!soundOn) return;
+    try {
+      ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+      if (kind === "open") {
+        [523, 659, 784, 1047].forEach((f, i) => tone(f, i * 0.09, 0.12));
+        for (let i = 0; i < 14; i++) tone(70 + (i % 2) * 18, 0.4 + i * 0.1, 0.1, "sawtooth", 0.035); // rumbling door
+        [784, 1047, 1319, 1568].forEach((f, i) => tone(f, 1.9 + i * 0.08, 0.16));
+      } else if (kind === "over") {
+        [392, 330, 262, 196].forEach((f, i) => tone(f, i * 0.22, 0.25, "square", 0.07));
+      } else if (kind === "blip") { tone(880, 0, 0.05, "square", 0.04); }
+    } catch {}
+  };
+
+  // ── loading ──
+  async function loadOwner() {
+    const [a, b] = await Promise.all([sb.from("blog_entries").select("*"), sb.from("blog_private").select("*")]);
+    if (a.error && b.error) { failed = true; return; }
+    const list = (a.data || []).concat((b.data || []).map((e) => Object.assign({}, e, { private: true })));
+    await Promise.all(list.map(async (e) => {
+      if (e.photo_path) { const u = await sb.storage.from("blog").createSignedUrl(e.photo_path, 3600); e.photo = u.data ? { src: u.data.signedUrl } : null; }
+    }));
+    entries = list;
+  }
+  async function loadWithPass() {
+    const token = store.get("blog-pass");
+    if (!token) return false;
+    const r = await gate({ action: "entries", token });
+    if (r.status === 401) { store.del("blog-pass"); return false; }
+    if (!r.entries) { failed = true; return true; }
+    entries = r.entries; passExpires = r.expires; return true;
+  }
+  async function startGate() {
+    gateState = { mode: "loading" }; render();
+    const r = await gate({ action: "challenge" });
+    if (r.locked) gateState = r.until ? { mode: "over", until: r.until } : { mode: "busy" };
+    else if (r.riddles) gateState = { mode: "riddles", riddles: r.riddles, challenge: r.challenge };
+    else gateState = { mode: "error" };
+    render();
   }
 
-  let data = null, failed = false;
-  try { data = await getJSON("/data/diary/index.json"); } catch { failed = !priv.length; }
-  const entries = ((data && data.entries) || []).concat(priv).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
-  // An entry's top-level fields are in its own language; e.en / e.es hold the translation.
-  const view = (e) => (L === (e.lang || "en") || !e[L] ? e : Object.assign({}, e, e[L], { lang: L }));
+  // ── gate view ──
+  function countdown(until) {
+    const ms = Math.max(0, new Date(until) - Date.now());
+    const h = Math.floor(ms / 3600e3), m = Math.floor((ms % 3600e3) / 60e3);
+    return `${String(h).padStart(2, "0")}H ${String(m).padStart(2, "0")}M`;
+  }
+  function renderGate() {
+    if (!gateState) { gateBox.innerHTML = ""; return; }
+    const T = UI[L];
+    let screen = "";
+    if (gateState.mode === "loading") screen = `<p class="px lead blink">${T.wait}</p>`;
+    else if (gateState.mode === "error") screen = `<h2 class="px">${T.gateTitle}</h2><p class="px lead">${T.gateErr}</p>`;
+    else if (gateState.mode === "busy") screen = `<div class="over"><h2 class="px">${T.over}</h2><p class="px lead">${T.busy}</p></div>`;
+    else if (gateState.mode === "over") screen = `<div class="over"><h2 class="px">${T.over}</h2><p class="px lead">${T.overLead}</p><p class="px lead blink">${T.cont}</p><p class="px count">${T.back} ${countdown(gateState.until)}</p></div>`;
+    else {
+      screen = `<h2 class="px">${T.gateTitle}</h2><p class="px lead">${T.gateLead}</p>
+        <form id="riddleForm" autocomplete="off">
+          ${gateState.riddles.map((r, i) => `<div class="riddle"><p class="px num">${T.n(i + 1)}</p><q lang="${L}">${esc(r[L] || r.es)}</q>
+            <input class="px" name="a${i}" aria-label="${T.n(i + 1)}" placeholder="${T.ph}" autocapitalize="off" spellcheck="false" maxlength="80"></div>`).join("")}
+          <button class="px press" type="submit">${T.go}</button>
+          <p class="px warn">${T.warn}</p>
+        </form>`;
+    }
+    const keep = gateBox.querySelector(".gate");
+    const values = keep ? Array.from(keep.querySelectorAll("input"), (i) => i.value) : [];
+    gateBox.innerHTML = `<section class="gate" aria-label="${T.gateTitle}">
+      <div class="behind px" aria-hidden="true">${L === "es" ? "¡BIENVENIDO!<br>★ PASA ★" : "WELCOME IN!<br>★ ENJOY ★"}</div>
+      <div class="door l"></div><div class="door r"></div><div class="stripe t"></div><div class="stripe b"></div>
+      <div class="screen">${screen}</div>
+      <button type="button" class="px sound" aria-pressed="${soundOn}">${T.sound}: ${soundOn ? "ON" : "OFF"}</button>
+    </section>`;
+    gateBox.querySelectorAll("input").forEach((inp, i) => { if (values[i]) inp.value = values[i]; inp.addEventListener("input", () => play("blip")); });
+    gateBox.querySelector(".sound").onclick = () => { soundOn = !soundOn; store.set("blog-sound", soundOn ? "on" : "off"); renderGate(); };
+    const form = $("#riddleForm");
+    if (form) form.onsubmit = onAnswer;
+  }
 
-  const render = () => {
-    document.documentElement.lang = L;
-    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = UI[L][el.dataset.i18n]));
-    document.querySelectorAll(".langtoggle button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === L)));
-    renderOwner();
+  async function onAnswer(ev) {
+    ev.preventDefault();
+    const inputs = Array.from(ev.target.querySelectorAll("input"));
+    const answers = inputs.map((i) => i.value.trim());
+    if (answers.some((a) => !a)) { const w = ev.target.querySelector(".warn"); w.textContent = UI[L].empty2; w.classList.add("blink"); return; }
+    const btn = ev.target.querySelector("button"); btn.disabled = true;
+    const r = await gate({ action: "answer", challenge: gateState.challenge, answers });
+    const g = gateBox.querySelector(".gate");
+    if (r.ok && r.token) {
+      store.set("blog-pass", r.token); passExpires = r.expires;
+      play("open");
+      g.classList.add("shake");
+      setTimeout(() => g.classList.add("open"), reduced ? 0 : 450);
+      const got = await gate({ action: "entries", token: r.token });
+      entries = got.entries || []; failed = !got.entries;
+      setTimeout(() => { gateState = null; render(true); window.scrollTo({ top: 0, behavior: reduced ? "auto" : "smooth" }); }, reduced ? 300 : 2500);
+    } else if (r.ok === false || r.error === "already_answered") {
+      play("over"); g.classList.add("shake");
+      gateState = { mode: "over", until: r.until || new Date(Date.now() + 24 * 3600e3).toISOString() };
+      setTimeout(render, reduced ? 0 : 450);
+    } else { gateState = { mode: "error" }; render(); }
+  }
+
+  // ── entries view ──
+  const view = (e) => (L === (e.lang || "en") || !e[L] ? e : Object.assign({}, e, e[L], { lang: L }));
+  function renderEntries(animate) {
+    if (gateState) { box.innerHTML = ""; return; }
     if (failed) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].error}</p></div>`; return; }
-    if (!entries.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].empty}</p></div>`; return; }
-    box.innerHTML = entries.map(view).map((e) => `
-    <article class="card entry${e.private ? " private" : ""}" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
+    const list = (entries || []).filter((e) => e && e.date).sort((a, b) => b.date.localeCompare(a.date) || String(b.id).localeCompare(String(a.id)));
+    if (!list.length) { box.innerHTML = `<div class="card" style="margin-top:24px"><p class="prose">${UI[L].empty}</p></div>`; return; }
+    box.innerHTML = list.map(view).map((e) => `
+    <article class="card entry${e.private ? " private" : ""}${animate ? " entries-in" : ""}" id="${esc(e.id)}" lang="${esc(e.lang || "en")}">
       <p class="meta"><a class="permalink" href="#${esc(e.id)}">${esc(fecha(e.date, L))}${e.moment ? " · " + esc(e.moment) : ""}</a>${e.private ? `<span class="lock">🔒 ${UI[L].priv}</span>` : ""}</p>
       ${e.title ? `<h2>${esc(e.title)}</h2>` : ""}
       ${e.photo && e.photo.src ? `<figure class="photo"><img src="${esc(e.photo.src)}" alt="${esc(e.alt || "")}" loading="lazy"></figure>` : ""}
       ${(e.paragraphs || []).map((t) => `<p>${esc(t)}</p>`).join("")}
-    </article>`).join("");
-  };
+    </article>`).join("") + (passExpires && !isOwner ? `<p class="pass-note">${UI[L].passLeft(fecha(passExpires.slice(0, 10), L))}</p>` : "");
+  }
 
   function renderOwner() {
     const bar = $("#ownerBar");
     if (!sb) { bar.innerHTML = ""; return; }
     if (session) {
-      bar.innerHTML = `${session.user.email === OWNER ? UI[L].owner + " " : ""}<button type="button" id="signOut">${UI[L].signout}</button>`;
+      bar.innerHTML = `${isOwner ? UI[L].owner + " " : ""}<button type="button" id="signOut">${UI[L].signout}</button>`;
       $("#signOut").onclick = async () => { await sb.auth.signOut(); location.reload(); };
     } else if (sent) {
       bar.textContent = UI[L].sent;
@@ -116,7 +307,7 @@
         ev.preventDefault();
         const email = ev.target.querySelector("input").value.trim();
         const { error } = await sb.auth.signInWithOtp({ email, options: { emailRedirectTo: location.origin + "/blog.html", shouldCreateUser: false } });
-        if (error) { alert(error.message); return; }
+        if (error) { bar.textContent = error.message; return; }
         sent = true; renderOwner();
       };
     } else {
@@ -125,12 +316,24 @@
     }
   }
 
+  function render(animate) {
+    document.documentElement.lang = L;
+    document.querySelectorAll("[data-i18n]").forEach((el) => (el.textContent = UI[L][el.dataset.i18n]));
+    document.querySelectorAll(".langtoggle button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.lang === L)));
+    renderOwner(); renderGate(); renderEntries(animate);
+  }
+
   document.querySelectorAll(".langtoggle button").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.lang === L) return;
-    L = b.dataset.lang;
-    try { localStorage.setItem("blog-lang", L); } catch {}
-    render();
+    L = b.dataset.lang; store.set("blog-lang", L); render();
   }));
+  setInterval(() => { if (gateState && gateState.mode === "over") renderGate(); }, 30000);
+
+  // ── go ──
+  try {
+    if (isOwner) await loadOwner();
+    else if (!(await loadWithPass())) { await startGate(); return; }
+  } catch { failed = true; }
   render();
   if (location.hash) document.getElementById(location.hash.slice(1))?.scrollIntoView();
 })();
