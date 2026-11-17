@@ -65,5 +65,5 @@ The blog is not public. Since 2026-11-16 entries live in Supabase, not in the re
 - **Photos:** upload to the private `blog` storage bucket and set `photo_path` (e.g. `diary/2026-10-26-manana.jpg`). Strip EXIF/location first.
 - **Owner-only entries:** `public.blog_private` (Erik only, never shown to visitors).
 - **Riddles:** `public.blog_riddles`, `bank` = `me` (about Erik) or `random`; `answers` lists every accepted answer in either language (accents, case, punctuation and leading articles are ignored). Set `active = false` to retire one.
-- **Gate rules** (`supabase/functions/blog-gate`): one riddle from each bank; both right → 1-day pass; any miss → that device is locked 24 h; max 8 tries per IP per day. Reloading shows the same riddles until answered.
+- **Gate rules** (`supabase/functions/blog-gate`): one riddle from each bank; both right → 1-day pass; any miss → that device is locked 24 h; max 2 tries per IP per day. Reloading shows the same riddles until answered.
 - Schema: `supabase/blog_gate.sql`.

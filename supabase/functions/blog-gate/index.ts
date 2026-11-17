@@ -6,7 +6,7 @@ import { createClient } from "npm:@supabase/supabase-js@2.45.4";
 
 const PASS_DAYS = 1;
 const LOCK_HOURS = 24;
-const IP_TRIES_PER_DAY = 8;      // a whole household shares one IP
+const IP_TRIES_PER_DAY = 2;      // per network per day; Erik wants it hard
 const PHOTO_URL_SECONDS = 3600;
 
 const sb = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, {
