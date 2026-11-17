@@ -76,7 +76,7 @@ function dateMatches(given: string, iso: string) {
 }
 // A riddle part: "date" (ISO answers), "contains" (answer words must appear, e.g. a city),
 // "exact" (every word must match, articles included; case, accents and punctuation still ignored), or plain text.
-type Part = { es: string; en: string; type?: string; answers: string[] };
+type Part = { es: string; en: string; type?: string; answers: string[]; any_order?: boolean };
 const exactNorm = (s: string) => String(s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "")
   .replace(/[^a-z0-9ñ ]+/g, " ").split(/\s+/).filter(Boolean).join(" ");
 function partMatches(given: string, p: Part) {
@@ -88,8 +88,12 @@ function partMatches(given: string, p: Part) {
 type Riddle = { id: number; bank: string; q_es: string; q_en: string; answers: string[]; parts: Part[] | null };
 function riddleMatches(given: unknown, r: Riddle) {
   if (r.parts && r.parts.length) {
-    const g = Array.isArray(given) ? given : [given];
-    return r.parts.every((p, i) => partMatches(String(g[i] ?? ""), p));
+    const g = (Array.isArray(given) ? given : [given]).map((x) => String(x ?? ""));
+    if (r.parts.every((p) => p.any_order) && r.parts.length === 2) {   // e.g. two vices, either order
+      return (partMatches(g[0], r.parts[0]) && partMatches(g[1], r.parts[1])) ||
+             (partMatches(g[1], r.parts[0]) && partMatches(g[0], r.parts[1]));
+    }
+    return r.parts.every((p, i) => partMatches(g[i] ?? "", p));
   }
   return matches(String(Array.isArray(given) ? given[0] ?? "" : given ?? ""), r.answers);
 }
